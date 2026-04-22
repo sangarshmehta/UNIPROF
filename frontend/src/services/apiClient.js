@@ -28,6 +28,14 @@ export async function apiRequest(path, options = {}) {
     emitEvent("toast", { type: "error", message: error.message });
     throw error;
   }
+
+  const baseUrl = String(API).replace(/\/+$/, "");
+  let normalizedPath = String(path || "");
+  if (!normalizedPath.startsWith("/")) normalizedPath = `/${normalizedPath}`;
+  if (normalizedPath !== "/api" && !normalizedPath.startsWith("/api/")) {
+    normalizedPath = `/api${normalizedPath}`;
+  }
+
   const token = localStorage.getItem(TOKEN_KEY);
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
@@ -38,7 +46,7 @@ export async function apiRequest(path, options = {}) {
 
   emitEvent("loading:start");
   try {
-    const response = await fetch(`${API}${path}`, {
+    const response = await fetch(`${baseUrl}${normalizedPath}`, {
       ...options,
       headers,
     });
