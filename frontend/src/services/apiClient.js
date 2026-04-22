@@ -23,6 +23,11 @@ async function parseResponse(response) {
 }
 
 export async function apiRequest(path, options = {}) {
+  if (!API) {
+    const error = new Error("Frontend is misconfigured: missing VITE_API_URL");
+    emitEvent("toast", { type: "error", message: error.message });
+    throw error;
+  }
   const token = localStorage.getItem(TOKEN_KEY);
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
@@ -48,4 +53,11 @@ export async function apiRequest(path, options = {}) {
   } finally {
     emitEvent("loading:end");
   }
+}
+
+// Convenience wrapper for direct fetch-style usage.
+// Example:
+//   try { const data = await apiJson("/api/teachers"); setData(data); } catch (e) { console.error(e); }
+export async function apiJson(path) {
+  return apiRequest(path);
 }

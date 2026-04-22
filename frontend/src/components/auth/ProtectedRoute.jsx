@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children, role }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (role && storedRole && storedRole !== role) {
+  if (role && storedRole !== role) {
     const route = storedRole === "teacher" ? "/teacher" : storedRole === "admin" ? "/admin" : "/student";
     return <Navigate to={route} replace />;
   }
