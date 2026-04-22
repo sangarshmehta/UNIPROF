@@ -26,7 +26,7 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (!env.CORS_ORIGINS.length) return callback(new Error("CORS origin is not configured"));
+      if (!env.CORS_ORIGINS.length) return callback(null, true);
       if (env.CORS_ORIGINS.includes(origin)) return callback(null, true);
       if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return callback(null, true);
       return callback(new Error("Origin not allowed by CORS"));
