@@ -3,6 +3,7 @@ const { assert } = require("../utils/validators");
 const { createNotification } = require("../services/notificationService");
 
 const MAX_BOOKINGS_PER_SLOT = 10;
+const LEGACY_SLOT_PREFIX = "legacy-slot:";
 
 async function listTeachers(req, res) {
   const { data, error } = await supabaseAdmin.from("teachers").select("*").eq("is_approved", true).order("id", { ascending: true });
@@ -80,8 +81,38 @@ async function getMySlots(req, res) {
     .select("id,time_slot,created_at")
     .eq("teacher_id", teacherId)
     .order("created_at", { ascending: false });
-  if (error) throw error;
-  return res.json(data || []);
+  let availabilityRows = [];
+  if (!error) {
+    availabilityRows = data || [];
+  }
+
+  const { data: teacher, error: teacherError } = await supabaseAdmin
+    .from("teachers")
+    .select("availability")
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (teacherError) throw teacherError;
+
+  const legacyRows = (Array.isArray(teacher?.availability) ? teacher.availability : [])
+    .filter(Boolean)
+    .map((slot) => ({
+      id: `${LEGACY_SLOT_PREFIX}${encodeURIComponent(slot)}`,
+      time_slot: slot,
+      created_at: null,
+    }));
+
+  const bySlot = new Map();
+  availabilityRows.forEach((row) => {
+    if (!row?.time_slot) return;
+    bySlot.set(row.time_slot, row);
+  });
+  legacyRows.forEach((row) => {
+    if (!bySlot.has(row.time_slot)) {
+      bySlot.set(row.time_slot, row);
+    }
+  });
+
+  return res.json(Array.from(bySlot.values()));
 }
 
 async function teacherDashboard(req, res) {
@@ -222,14 +253,8 @@ async function rejectTeacherBooking(req, res) {
 
 async function publishSlot(req, res) {
   const teacherId = Number(req.user.teacher_id);
-  // #region agent log
-  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H1_H2',location:'backend/src/controllers/teacherController.js:225',message:'publishSlot entry',data:{hasUser:Boolean(req.user),teacherId,isTeacherIdFinite:Number.isFinite(teacherId),bodyKeys:Object.keys(req.body||{})},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   assert(Number.isFinite(teacherId), "Forbidden", 403);
   const { time_slot } = req.body;
-  // #region agent log
-  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H3',location:'backend/src/controllers/teacherController.js:229',message:'publishSlot payload validation checkpoint',data:{hasTimeSlot:Boolean(time_slot),timeSlotLength:String(time_slot||'').length},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   assert(time_slot, "time_slot is required");
 
   const { data, error } = await supabaseAdmin
@@ -237,18 +262,58 @@ async function publishSlot(req, res) {
     .insert({ teacher_id: teacherId, time_slot })
     .select("*")
     .single();
-  // #region agent log
-  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H4_H5',location:'backend/src/controllers/teacherController.js:237',message:'publishSlot insert result',data:{hasData:Boolean(data),errorCode:error?.code||null,errorMessage:error?.message||null,errorHint:error?.hint||null},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-  if (error) throw error;
-  return res.status(201).json(data);
+  if (!error) return res.status(201).json(data);
+
+  // Fallback for legacy deployments where availability.time_slot is not text.
+  const { data: teacher, error: teacherError } = await supabaseAdmin
+    .from("teachers")
+    .select("availability")
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (teacherError) throw error;
+
+  const existing = Array.isArray(teacher?.availability) ? teacher.availability : [];
+  if (!existing.includes(time_slot)) {
+    const { error: updateError } = await supabaseAdmin
+      .from("teachers")
+      .update({ availability: [...existing, time_slot] })
+      .eq("id", teacherId);
+    if (updateError) throw error;
+  }
+
+  return res.status(201).json({
+    id: `${LEGACY_SLOT_PREFIX}${encodeURIComponent(time_slot)}`,
+    teacher_id: teacherId,
+    time_slot,
+    created_at: new Date().toISOString(),
+  });
 }
 
 async function deleteSlot(req, res) {
   const teacherId = Number(req.user.teacher_id);
-  const slotId = Number(req.params.id);
   assert(Number.isFinite(teacherId), "Forbidden", 403);
 
+  const slotIdRaw = String(req.params.id || "");
+  if (slotIdRaw.startsWith(LEGACY_SLOT_PREFIX)) {
+    const decodedSlot = decodeURIComponent(slotIdRaw.slice(LEGACY_SLOT_PREFIX.length));
+    const { data: teacher, error: teacherError } = await supabaseAdmin
+      .from("teachers")
+      .select("availability")
+      .eq("id", teacherId)
+      .maybeSingle();
+    if (teacherError) throw teacherError;
+    const existing = Array.isArray(teacher?.availability) ? teacher.availability : [];
+    const next = existing.filter((slot) => slot !== decodedSlot);
+    const { error: updateError } = await supabaseAdmin
+      .from("teachers")
+      .update({ availability: next })
+      .eq("id", teacherId);
+    if (updateError) throw updateError;
+    return res.status(204).send();
+  }
+
+  const slotId = Number(slotIdRaw);
+  assert(Number.isFinite(slotId), "Invalid slot id");
   const { error } = await supabaseAdmin
     .from("availability")
     .delete()

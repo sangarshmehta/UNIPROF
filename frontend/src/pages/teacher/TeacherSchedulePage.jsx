@@ -38,16 +38,10 @@ export default function TeacherSchedulePage() {
       setError("");
       setSuccess("");
       const timeSlotString = `${newSlot.day.slice(0, 3)} ${newSlot.start} - ${newSlot.end}${newSlot.recurring ? ' (Weekly)' : ''}`;
-      // #region agent log
-      fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H3',location:'frontend/src/pages/teacher/TeacherSchedulePage.jsx:41',message:'publish availability clicked',data:{day:newSlot.day,start:newSlot.start,end:newSlot.end,recurring:newSlot.recurring,timeSlotLength:timeSlotString.length},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       await publishSlot({ time_slot: timeSlotString });
       setSuccess("Slot added to your schedule!");
       await loadSlots();
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H1_H4',location:'frontend/src/pages/teacher/TeacherSchedulePage.jsx:47',message:'publish availability failed on client',data:{errorMessage:err?.message||'unknown'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setError(err.message || "Failed to add slot");
     }
   }
