@@ -97,7 +97,7 @@ export default function TeacherDashboard() {
                 {bookings.map((booking) => (
                   <div key={booking.id} className="glass-card p-6 flex flex-col md:flex-row justify-between items-center gap-6 group hover:border-blue-500/30">
                     <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xl">
+                      <div className="w-14 h-14 rounded-2xl bg-[var(--bg-light)] border border-[var(--border-color)] flex items-center justify-center text-blue-600 font-black text-xl">
                         {booking.student_name?.charAt(0)}
                       </div>
                       <div>
@@ -106,8 +106,8 @@ export default function TeacherDashboard() {
                           📅 {booking.time_slot}
                         </p>
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full mt-1 inline-block ${
-                          booking.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                          booking.status === 'accepted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          booking.status === 'pending' ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' :
+                          booking.status === 'accepted' ? 'bg-green-500/10 text-green-700 border border-green-500/20' : 'bg-slate-500/10 text-slate-600 border border-slate-500/20'
                         }`}>
                           {booking.status}
                         </span>
@@ -119,14 +119,14 @@ export default function TeacherDashboard() {
                         <button 
                           onClick={() => handleAction(booking.id, 'reject')}
                           disabled={processingId === booking.id}
-                          className="px-6 py-2.5 rounded-xl border-2 border-red-500/20 text-red-500 font-bold text-xs hover:bg-red-50 transition-all"
+                          className="px-6 py-2.5 rounded-xl border-2 border-red-500/20 text-red-500 font-bold text-xs hover:bg-[var(--bg-light)] transition-all"
                         >
                           Reject
                         </button>
                         <button 
                           onClick={() => handleAction(booking.id, 'accept')}
                           disabled={processingId === booking.id}
-                          className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                          className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
                         >
                           Accept Request
                         </button>
@@ -150,7 +150,7 @@ export default function TeacherDashboard() {
                </Link>
             </div>
             
-            <div className="glass-card p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-100">
+            <div className="glass-card p-8 bg-indigo-600 text-white border-none shadow-xl shadow-indigo-500/20">
                <h3 className="font-bold text-lg mb-2">Mentor Tip</h3>
                <p className="text-sm opacity-80 leading-relaxed font-medium">
                  Keep your weekly schedule updated to help students find the best time to connect with you.

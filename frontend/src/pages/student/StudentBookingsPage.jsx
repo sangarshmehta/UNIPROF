@@ -49,7 +49,7 @@ export default function StudentBookingsPage() {
             {bookings.map((booking) => (
               <div key={booking.id} className="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-6 group hover:border-blue-500/30">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-3xl bg-blue-50 flex items-center justify-center text-3xl">
+                  <div className="w-16 h-16 rounded-3xl bg-[var(--bg-light)] border border-[var(--border-color)] flex items-center justify-center text-3xl">
                      {booking.teacher?.name?.charAt(0) || "👨‍🏫"}
                   </div>
                   <div>
@@ -57,9 +57,9 @@ export default function StudentBookingsPage() {
                     <p className="text-[var(--text-muted)] font-medium">📅 {booking.time_slot}</p>
                     <div className="flex gap-2 mt-2">
                        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                         booking.status === 'completed' ? 'bg-green-100 text-green-700' :
-                         booking.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
-                         booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'
+                         booking.status === 'completed' ? 'bg-green-500/10 text-green-700 border border-green-500/20' :
+                         booking.status === 'accepted' ? 'bg-blue-500/10 text-blue-700 border border-blue-500/20' :
+                         booking.status === 'pending' ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' : 'bg-slate-500/10 text-slate-700 border border-slate-500/20'
                        }`}>
                          {booking.status}
                        </span>
@@ -70,7 +70,7 @@ export default function StudentBookingsPage() {
                 {booking.status === 'completed' && (
                    <button 
                     onClick={() => navigate(`/teachers/${booking.teacher_id}`)}
-                    className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all"
+                    className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
                    >
                      Rate Session
                    </button>

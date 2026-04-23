@@ -106,7 +106,7 @@ export default function TeacherSchedulePage() {
                   </div>
                 </div>
 
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <label className="flex items-center gap-3 cursor-pointer p-4 bg-[var(--bg-light)] rounded-xl border border-[var(--border-color)]">
                    <input 
                     type="checkbox" 
                     className="w-5 h-5 rounded-lg border-blue-400 text-blue-600 focus:ring-blue-500"
@@ -114,12 +114,12 @@ export default function TeacherSchedulePage() {
                     onChange={e => setNewSlot(p => ({ ...p, recurring: e.target.checked }))}
                    />
                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-blue-800">Weekly Recurring</span>
+                      <span className="text-sm font-bold text-[var(--text-main)]">Weekly Recurring</span>
                       <span className="text-[10px] text-blue-600 font-medium">Auto-publish every week</span>
                    </div>
                 </label>
 
-                <button type="submit" className="w-full btn-primary py-4 rounded-2xl shadow-xl shadow-blue-100">
+                <button type="submit" className="w-full btn-primary py-4 rounded-2xl shadow-xl shadow-blue-500/20">
                    Publish Availability
                 </button>
               </form>
@@ -142,22 +142,22 @@ export default function TeacherSchedulePage() {
                 {slots.map(slot => (
                   <div key={slot.id} className="glass-card p-6 flex justify-between items-center group hover:border-blue-500/30 transition-all">
                      <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-xl">
+                        <div className="w-12 h-12 bg-[var(--bg-light)] rounded-2xl border border-[var(--border-color)] flex items-center justify-center text-blue-600 text-xl">
                            📅
                         </div>
                         <div>
                            <h4 className="font-bold text-lg">{slot.time_slot}</h4>
                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Active</span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">Active</span>
                               {slot.time_slot.includes('Weekly') && (
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Recurring</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">Recurring</span>
                               )}
                            </div>
                         </div>
                      </div>
                      <button 
                         onClick={() => handleDeleteSlot(slot.id)}
-                        className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                        className="p-3 text-red-500 hover:bg-[var(--bg-light)] rounded-xl transition-all opacity-0 group-hover:opacity-100"
                         title="Delete slot"
                      >
                         🗑️

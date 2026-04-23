@@ -138,7 +138,7 @@ export default function TeacherDetailsPage() {
              </button>
           </div>
           <div className="px-10 pb-10 relative">
-            <div className="w-32 h-32 rounded-3xl bg-white p-1 absolute -top-16 shadow-xl overflow-hidden">
+            <div className="w-32 h-32 rounded-3xl bg-[var(--bg-light)] p-1 absolute -top-16 shadow-xl overflow-hidden border border-[var(--border-color)]">
                <img 
                  src={teacher.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&size=256`} 
                  className="w-full h-full object-cover rounded-2xl"
@@ -151,23 +151,23 @@ export default function TeacherDetailsPage() {
                 <h1 className="text-4xl font-black tracking-tight">{teacher.name}</h1>
                 <p className="text-blue-600 font-bold text-lg">{teacher.department}</p>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-100">
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-700 text-xs font-bold rounded-full border border-blue-500/20">
                     🎓 {teacher.education_level || "Academic"}
                   </span>
                   {teacher.specialization?.map(s => (
-                    <span key={s} className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-100">
+                    <span key={s} className="px-3 py-1 bg-purple-500/10 text-purple-700 text-xs font-bold rounded-full border border-purple-500/20">
                       ✨ {s}
                     </span>
                   ))}
                 </div>
               </div>
               
-              <div className="glass-card p-4 bg-yellow-50/30 border-yellow-200/50 flex items-center gap-6">
+              <div className="glass-card p-4 bg-yellow-500/10 border-yellow-500/20 flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-black text-yellow-600">{teacher.rating?.toFixed(1) || "N/A"}</div>
                   <div className="text-[10px] font-bold uppercase tracking-widest opacity-60">Rating</div>
                 </div>
-                <div className="w-px h-10 bg-yellow-200/50"></div>
+                <div className="w-px h-10 bg-yellow-500/20"></div>
                 <div className="text-center">
                   <div className="text-2xl font-black text-blue-600">{teacher.total_reviews || 0}</div>
                   <div className="text-[10px] font-bold uppercase tracking-widest opacity-60">Reviews</div>
@@ -203,7 +203,7 @@ export default function TeacherDetailsPage() {
 
              {/* Rating Section - ONLY visible after completion */}
              {hasCompletedBooking && (
-                <section className="glass-card p-8 bg-blue-600 text-white border-none shadow-blue-200 shadow-xl">
+                <section className="glass-card p-8 bg-blue-600 text-white border-none shadow-blue-500/20 shadow-xl">
                   <h3 className="text-lg font-bold mb-4">Rate your Experience</h3>
                   <form onSubmit={handleRate} className="space-y-4">
                     <select 
@@ -223,7 +223,7 @@ export default function TeacherDetailsPage() {
                       value={review}
                       onChange={(e) => setReview(e.target.value)}
                     />
-                    <button type="submit" className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all">
+                    <button type="submit" className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all">
                       Submit Review
                     </button>
                   </form>
@@ -243,7 +243,7 @@ export default function TeacherDetailsPage() {
                       <p className="text-[var(--text-muted)] font-medium">Select a slot to request a 1-on-1 session.</p>
                    </div>
                    <div className="text-right">
-                      <span className="text-[10px] font-black uppercase tracking-tighter bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
+                      <span className="text-[10px] font-black uppercase tracking-tighter bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full border border-blue-500/20">
                         Capacity: 10 students / slot
                       </span>
                    </div>

@@ -70,7 +70,7 @@ export default function AppShell({ title, children }) {
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold hover:ring-2 hover:ring-blue-400 transition-all overflow-hidden"
+              className="w-10 h-10 rounded-full bg-[var(--bg-light)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-main)] font-bold hover:ring-2 hover:ring-blue-400 transition-all overflow-hidden"
             >
               {user?.profile_image ? (
                 <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
@@ -93,7 +93,7 @@ export default function AppShell({ title, children }) {
                   <div className="h-px bg-[var(--border-color)] my-2"></div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 font-medium rounded-lg"
+                    className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-[var(--bg-light)] font-medium rounded-lg"
                   >
                     Logout
                   </button>
@@ -107,7 +107,7 @@ export default function AppShell({ title, children }) {
       <div className="flex flex-1">
         {/* --- Drawer Sidebar --- */}
         <aside 
-          className={`fixed md:sticky top-[var(--nav-height)] left-0 z-40 h-[calc(100vh-var(--nav-height))] w-64 glass-card rounded-none border-r border-t-0 transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+          className={`fixed md:sticky top-[var(--nav-height)] left-0 z-40 h-[calc(100vh-var(--nav-height))] w-64 glass-card sidebar-surface rounded-none border-r border-t-0 transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
         >
           <div className="flex flex-col h-full p-4 gap-2">
             {navLinks.map((link) => (
@@ -117,8 +117,8 @@ export default function AppShell({ title, children }) {
                 onClick={() => setDrawerOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   location.pathname === link.path 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:bg-blue-500/20 dark:text-blue-100 dark:shadow-none' 
-                  : 'hover:bg-[var(--bg-light)] text-[var(--text-main)] dark:hover:bg-slate-800/60'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                  : 'hover:bg-[var(--bg-light)] text-[var(--text-main)] border border-transparent hover:border-[var(--border-color)]'
                 }`}
               >
                 <span className="text-lg">{link.icon}</span>
@@ -129,7 +129,7 @@ export default function AppShell({ title, children }) {
             <div className="mt-auto">
                <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-[var(--bg-light)] border border-transparent hover:border-[var(--border-color)] transition-all font-medium"
                 >
                   <span className="text-lg">🚪</span>
                   <span>Logout</span>

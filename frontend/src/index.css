@@ -87,6 +87,14 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.sidebar-surface {
+  background: color-mix(in srgb, var(--card-light) 86%, var(--bg-light) 14%);
+}
+
+[data-theme='dark'] .sidebar-surface {
+  background: color-mix(in srgb, var(--card-dark) 90%, var(--bg-light) 10%);
+}
+
 /* --- Buttons --- */
 .btn-primary {
   background-color: var(--primary);
