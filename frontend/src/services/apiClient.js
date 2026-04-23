@@ -45,6 +45,11 @@ export async function apiRequest(path, options = {}) {
 
   emitEvent("loading:start");
   try {
+    if (normalizedPath.includes("/teacher/slots")) {
+      // #region agent log
+      fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H1_H2_H4',location:'frontend/src/services/apiClient.js:52',message:'apiRequest outgoing teacher slots request',data:{normalizedPath,method:options?.method||'GET',hasToken:Boolean(token),hasBody:Boolean(options?.body)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
     const response = await fetch(`${baseUrl}${normalizedPath}`, {
       ...options,
       headers,
@@ -52,6 +57,11 @@ export async function apiRequest(path, options = {}) {
     const payload = await parseResponse(response);
     return payload;
   } catch (error) {
+    if (normalizedPath.includes("/teacher/slots")) {
+      // #region agent log
+      fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H1_H4_H5',location:'frontend/src/services/apiClient.js:62',message:'apiRequest teacher slots request failed',data:{normalizedPath,errorMessage:error?.message||'unknown',status:error?.status||null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
     emitEvent("toast", {
       type: "error",
       message: error.message || "Request failed",
