@@ -8,13 +8,23 @@ ALTER TABLE public.teachers
   ADD COLUMN IF NOT EXISTS languages text[] DEFAULT '{}';
 
 -- 2. Add booked_count to availability for capacity tracking.
-ALTER TABLE public.availability
-  ADD COLUMN IF NOT EXISTS booked_count int DEFAULT 0 CHECK (booked_count >= 0);
+DO $$
+BEGIN
+  IF to_regclass('public.availability') IS NOT NULL THEN
+    ALTER TABLE public.availability
+      ADD COLUMN IF NOT EXISTS booked_count int DEFAULT 0 CHECK (booked_count >= 0);
+  END IF;
+END $$;
 
 -- 3. Update ratings to include booking reference and review text.
-ALTER TABLE public.ratings
-  ADD COLUMN IF NOT EXISTS booking_id bigint REFERENCES public.bookings(id) ON DELETE CASCADE,
-  ADD COLUMN IF NOT EXISTS review text DEFAULT '';
+DO $$
+BEGIN
+  IF to_regclass('public.ratings') IS NOT NULL THEN
+    ALTER TABLE public.ratings
+      ADD COLUMN IF NOT EXISTS booking_id bigint REFERENCES public.bookings(id) ON DELETE CASCADE,
+      ADD COLUMN IF NOT EXISTS review text DEFAULT '';
+  END IF;
+END $$;
 
 -- 4. Create Wishlist table.
 CREATE TABLE IF NOT EXISTS public.wishlist (
@@ -28,4 +38,9 @@ CREATE TABLE IF NOT EXISTS public.wishlist (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_wishlist_student ON public.wishlist(student_id);
 CREATE INDEX IF NOT EXISTS idx_wishlist_teacher ON public.wishlist(teacher_id);
-CREATE INDEX IF NOT EXISTS idx_ratings_booking ON public.ratings(booking_id);
+DO $$
+BEGIN
+  IF to_regclass('public.ratings') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_ratings_booking ON public.ratings(booking_id);
+  END IF;
+END $$;
