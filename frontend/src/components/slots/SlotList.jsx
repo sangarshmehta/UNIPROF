@@ -39,7 +39,7 @@ export default function SlotList({ slots = [], onBook, bookingSlot = "", disable
                   </span>
                 </div>
                 {remaining > 0 && remaining <= 3 && (
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
                     Only {remaining} left!
                   </span>
                 )}
@@ -51,9 +51,9 @@ export default function SlotList({ slots = [], onBook, bookingSlot = "", disable
               disabled={isFull || disableBook || isBooking}
               className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                 isFull 
-                  ? 'bg-red-50 text-red-400 cursor-not-allowed' 
+                  ? 'bg-red-500/10 text-red-500 border border-red-500/20 cursor-not-allowed' 
                   : isBooking
-                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                    ? 'bg-blue-500/10 text-blue-700 border border-blue-500/20 animate-pulse'
                     : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
               }`}
             >

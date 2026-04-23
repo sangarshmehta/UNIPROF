@@ -56,13 +56,13 @@ export default function StudentDashboard() {
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* --- Unified Smart Search Bar --- */}
-        <div className="glass-card p-2 flex flex-col md:flex-row items-stretch gap-2 shadow-xl border-blue-500/10">
+        <div className="glass-card p-2 flex flex-col md:flex-row items-stretch gap-2 shadow-xl border border-[var(--border-color)]">
           <div className="flex-1 relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔍</span>
             <input 
               type="text"
               placeholder="Search by name..."
-              className="w-full bg-transparent border-none px-10 py-4 outline-none text-lg font-medium"
+              className="w-full bg-transparent border-none px-10 py-4 outline-none text-lg font-medium text-[var(--text-main)]"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -72,7 +72,7 @@ export default function StudentDashboard() {
           
           <div className="flex flex-wrap items-center gap-2 p-1">
             <select 
-              className="bg-[var(--bg-light)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all border-none"
+              className="bg-[var(--bg-light)] border border-[var(--border-color)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
             >
@@ -81,7 +81,7 @@ export default function StudentDashboard() {
             </select>
 
             <select 
-              className="bg-[var(--bg-light)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all border-none"
+              className="bg-[var(--bg-light)] border border-[var(--border-color)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all"
               value={rating}
               onChange={(e) => setRating(e.target.value)}
             >
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
             </select>
 
             <select 
-              className="bg-[var(--bg-light)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all border-none"
+              className="bg-[var(--bg-light)] border border-[var(--border-color)] px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-400 transition-all"
               value={availability}
               onChange={(e) => setAvailability(e.target.value)}
             >

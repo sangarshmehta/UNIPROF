@@ -4,7 +4,7 @@ export default function TeacherCard({ teacher }) {
   const { id, name, subjects, rating, profile_image, availability, timetable_image } = teacher;
 
   return (
-    <div className="glass-card flex flex-col overflow-hidden group">
+    <div className="glass-card flex flex-col overflow-hidden group border border-[var(--border-color)]">
       {/* --- Header / Image --- */}
       <div className="relative h-48 overflow-hidden">
         <img 
@@ -28,7 +28,7 @@ export default function TeacherCard({ teacher }) {
 
       {/* --- Content --- */}
       <div className="p-6 flex-1 flex flex-col">
-        <h3 className="text-xl font-bold mb-1 group-hover:text-blue-600 transition-colors">{name}</h3>
+        <h3 className="text-xl font-bold mb-1 group-hover:text-blue-600 transition-colors text-[var(--text-main)]">{name}</h3>
         <p className="text-[var(--text-muted)] text-sm font-medium mb-4 line-clamp-1">
           {subjects?.join(", ") || "No subjects specified"}
         </p>
@@ -39,12 +39,12 @@ export default function TeacherCard({ teacher }) {
           <div className="flex flex-wrap gap-1.5">
             {availability && availability.length > 0 ? (
               availability.slice(0, 2).map((slot, i) => (
-                <span key={i} className="text-[10px] font-semibold bg-[var(--bg-light)] px-2 py-1 rounded-md border border-[var(--border-color)]">
+                <span key={i} className="text-[10px] font-semibold bg-[var(--bg-light)] px-2 py-1 rounded-md border border-[var(--border-color)] text-[var(--text-main)]">
                   {slot}
                 </span>
               ))
             ) : (
-              <span className="text-[10px] font-medium opacity-40 italic">No upcoming slots</span>
+              <span className="text-[10px] font-medium text-[var(--text-muted)] italic">No upcoming slots</span>
             )}
           </div>
         </div>
