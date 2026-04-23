@@ -1,42 +1,23 @@
 import { apiRequest } from "./apiClient";
+import {
+  clearSession as _clearSession,
+  getGender as _getGender,
+  getName as _getName,
+  getRole as _getRole,
+  getToken as _getToken,
+  saveSession as _saveSession,
+} from "./tokenHelper";
 
-const TOKEN_KEY = "uniprof_token";
-const ROLE_KEY = "uniprof_role";
-const NAME_KEY = "uniprof_name";
-const GENDER_KEY = "uniprof_gender";
+// ── Public re-exports so AuthContext and other callers don't need to
+//    import tokenHelper directly. ──────────────────────────────────
+export const getStoredToken  = _getToken;
+export const getStoredRole   = _getRole;
+export const getStoredName   = _getName;
+export const getStoredGender = _getGender;
+export const saveSession     = _saveSession;
+export const clearSession    = _clearSession;
 
-export function getStoredToken() {
-  return localStorage.getItem(TOKEN_KEY) || "";
-}
-
-export function getStoredRole() {
-  return localStorage.getItem(ROLE_KEY) || "";
-}
-
-export function getStoredName() {
-  return localStorage.getItem(NAME_KEY) || "";
-}
-
-export function getStoredGender() {
-  return localStorage.getItem(GENDER_KEY) || "";
-}
-
-export function saveSession({ token, role, name, gender }) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-  if (role) localStorage.setItem(ROLE_KEY, role);
-  else localStorage.removeItem(ROLE_KEY);
-  localStorage.setItem(NAME_KEY, name || "");
-  localStorage.setItem(GENDER_KEY, gender || "");
-}
-
-export function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(ROLE_KEY);
-  localStorage.removeItem(NAME_KEY);
-  localStorage.removeItem(GENDER_KEY);
-}
-
+// ── API calls ────────────────────────────────────────────────
 export async function login(payload) {
   return apiRequest("/api/login", {
     method: "POST",
@@ -54,3 +35,4 @@ export async function register(payload) {
 export async function getCurrentUser() {
   return apiRequest("/api/me");
 }
+

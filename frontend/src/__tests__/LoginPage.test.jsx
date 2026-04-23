@@ -2,24 +2,24 @@
  * LoginPage.test.jsx
  * ------------------
  * Smoke tests for the LoginPage component.
- * Verifies it renders the key UI elements correctly and that
- * form validation blocks submission when fields are empty.
+ * Verifies it renders the key UI elements correctly.
  *
- * AuthContext is mocked so the test doesn't need real credentials.
+ * AuthContext and react-router hooks are mocked so the test
+ * doesn't need a real AuthProvider or browser router.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 // ── Mock useAuth so LoginPage doesn't need a real AuthProvider ──
-vi.mock("./context/AuthContext.jsx", () => ({
+vi.mock("../context/AuthContext.jsx", () => ({
   useAuth: () => ({
     login: vi.fn().mockRejectedValue(new Error("Invalid credentials")),
     logout: vi.fn(),
   }),
 }));
 
-// ── Mock react-router navigate so we don't need a full router ──
+// ── Stub react-router hooks used inside LoginPage ──────────────
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -29,7 +29,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-import LoginPage from "./pages/LoginPage.jsx";
+import LoginPage from "../pages/LoginPage.jsx";
 
 function renderLoginPage() {
   return render(
@@ -58,13 +58,11 @@ describe("LoginPage – rendering", () => {
 });
 
 describe("LoginPage – validation", () => {
-  it("shows an error when submitted with empty fields", async () => {
+  it("does not crash on submit click with empty fields", () => {
     renderLoginPage();
     const button = screen.getByRole("button", { name: /sign in/i });
-    // Click submit with empty fields
     fireEvent.click(button);
-    // The required HTML5 attribute prevents submission, OR our JS guard fires
-    // Either way, no navigation should happen and no crash.
+    // Should still be in the document (no unmount/crash)
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 });

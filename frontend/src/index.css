@@ -2,45 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-  color: #0f172a;
+@layer base {
+  :root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg-light: #f8fafc;
+    --card-light: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --border-color: #e2e8f0;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .dark {
+    --bg-light: #0f172a;
+    --card-light: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    @apply bg-[var(--bg-light)] text-[var(--text-main)] transition-colors duration-200;
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
-#root {
-  min-height: 100vh;
+@layer components {
+  .glass-card {
+    background: var(--card-light);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    border-radius: 12px;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
-
+/* Animations */
 .app-page {
-  animation: pageFade 220ms ease-out;
+  animation: pageFade 220ms ease-out forwards;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(8px);
+.slide-up {
+  animation: slideUp 400ms ease-out forwards;
 }
 
 @keyframes pageFade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .input-error-text {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #dc2626;
+  color: var(--danger);
 }

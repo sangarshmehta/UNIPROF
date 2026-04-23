@@ -1,7 +1,6 @@
 import API from "../config/api";
 import { emitEvent } from "./appEvents";
-
-const TOKEN_KEY = "uniprof_token";
+import { getToken } from "./tokenHelper";
 
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
@@ -36,7 +35,7 @@ export async function apiRequest(path, options = {}) {
     normalizedPath = `/api${normalizedPath}`;
   }
 
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getToken();
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
     ...(!isFormData && options.body ? { "Content-Type": "application/json" } : {}),

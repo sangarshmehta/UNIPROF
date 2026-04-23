@@ -70,58 +70,94 @@ export default function StudentProfilePage() {
   }
 
   return (
-    <AppShell title="My Profile" subtitle="Manage your student information.">
-      <div className="max-w-xl glass-card rounded-2xl border border-white/70 p-6 shadow-sm">
+    <AppShell title="My Profile" subtitle="Manage your personal information and preferences.">
+      <div className="max-w-2xl glass-card bg-[var(--card-light)] border border-[var(--border-color)] p-6 sm:p-8 slide-up">
         {loading ? (
-          <p className="text-sm text-slate-600 animate-pulse">Loading profile...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm font-medium text-[var(--text-muted)]">Loading profile...</p>
+          </div>
         ) : (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:ring-4 focus:ring-indigo-100 ${
-                fieldErrors.name ? "border-red-400" : "border-slate-300 focus:border-indigo-400"
-              }`}
-              placeholder="Name"
-              value={form.name}
-              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            />
-            {fieldErrors.name ? <p className="input-error-text">{fieldErrors.name}</p> : null}
-            <select
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-              value={form.gender}
-              onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-              onChange={handleImageUpload}
-            />
-            {uploading ? <p className="text-xs text-slate-500">Uploading image...</p> : null}
-            {form.profile_image ? (
-              <div className="flex items-center gap-3">
-                <img src={form.profile_image} alt="Profile preview" className="h-12 w-12 rounded-lg object-cover border border-slate-200" />
-                <p className="text-xs text-slate-600 break-all">{form.profile_image}</p>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="flex-shrink-0">
+                <div className="w-24 h-24 rounded-full border-2 border-blue-100 dark:border-blue-900 overflow-hidden bg-[var(--bg-light)] flex items-center justify-center">
+                  {form.profile_image ? (
+                    <img src={form.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-bold text-blue-300 dark:text-blue-700">
+                      {form.name ? form.name.charAt(0).toUpperCase() : "?"}
+                    </span>
+                  )}
+                </div>
               </div>
-            ) : null}
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-              placeholder="Phone number"
-              value={form.phone_number}
-              onChange={(event) => setForm((prev) => ({ ...prev, phone_number: event.target.value }))}
-            />
-            <Alert message={error} />
-            <Alert type="success" message={success} />
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-slate-800 transition"
-            >
-              {saving ? "Saving..." : "Save changes"}
-            </button>
+              <div className="flex-1 space-y-2">
+                <label className="block text-sm font-medium text-[var(--text-main)]">Profile Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-300 dark:hover:file:bg-blue-900 transition-colors"
+                  onChange={handleImageUpload}
+                />
+                {uploading && <p className="text-xs text-blue-500 font-medium mt-1">Uploading image...</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">Full Name</label>
+                <input
+                  className={`w-full rounded-xl border bg-[var(--bg-light)] px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 ${
+                    fieldErrors.name ? "border-red-400" : "border-[var(--border-color)]"
+                  }`}
+                  placeholder="Enter your name"
+                  value={form.name}
+                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                />
+                {fieldErrors.name ? <p className="input-error-text mt-1">{fieldErrors.name}</p> : null}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">Gender</label>
+                <select
+                  className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-light)] px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
+                  value={form.gender}
+                  onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">Phone Number <span className="font-normal opacity-70">(Private)</span></label>
+                <input
+                  className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-light)] px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
+                  placeholder="Enter your phone number"
+                  value={form.phone_number}
+                  onChange={(event) => setForm((prev) => ({ ...prev, phone_number: event.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)]">
+              <Alert message={error} />
+              <Alert type="success" message={success} />
+              
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn-primary"
+                >
+                  {saving ? "Saving Changes..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
           </form>
         )}
       </div>

@@ -25,15 +25,30 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow server-to-server or same-origin requests (no Origin header).
       if (!origin) return callback(null, true);
-      if (!env.CORS_ORIGINS.length) return callback(null, true);
-      if (env.CORS_ORIGINS.includes(origin)) return callback(null, true);
+
+      // Explicit wildcard – only set CORS_ORIGIN=* in development/local.
+      if (env.CORS_ORIGINS.includes("*")) return callback(null, true);
+
+      // Empty allow-list → open in development, closed in production.
+      if (!env.CORS_ORIGINS.length) {
+        if (env.NODE_ENV !== "production") return callback(null, true);
+        return callback(new Error("CORS_ORIGIN is not configured"));
+      }
+
+      // Vercel preview URLs are always allowed (team deploys).
       if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return callback(null, true);
+
+      // Strict whitelist check.
+      if (env.CORS_ORIGINS.includes(origin)) return callback(null, true);
+
       return callback(new Error("Origin not allowed by CORS"));
     },
     credentials: true,
   }),
 );
+
 app.use(apiRateLimiter);
 
 app.get("/", (req, res) => {

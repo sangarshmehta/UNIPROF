@@ -18,7 +18,9 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo \"No test runner configured\""
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "browserslist": {
     "production": [
@@ -34,9 +36,12 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^1.6.1",
     "autoprefixer": "^10.5.0",
+    "jsdom": "^25.0.1",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^1.6.1"
   }
 }

@@ -37,8 +37,18 @@ async function getSlots(req, res) {
     .eq("teacher_id", teacherId);
   if (bookingsError) throw bookingsError;
 
+  // Extend to include new availability table (Advanced Scheduling)
+  const { data: advancedSlots, error: advancedSlotsError } = await supabaseAdmin
+    .from("availability")
+    .select("time_slot")
+    .eq("teacher_id", teacherId);
+  if (advancedSlotsError && advancedSlotsError.code !== '42P01') { // Ignore if table doesn't exist yet
+    console.error("Advanced slots error:", advancedSlotsError);
+  }
+
   const allSlots = [
     ...(Array.isArray(teacher.availability) ? teacher.availability : []),
+    ...(advancedSlots || []).map((s) => s.time_slot),
     ...(bookings || []).map((b) => b.time_slot),
   ];
   const slotSet = new Set(allSlots.filter(Boolean));
