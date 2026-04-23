@@ -6,6 +6,58 @@ const MAX_BOOKINGS_PER_SLOT = 10;
 const ACTIVE_BOOKING_STATUSES = ["pending", "accepted"];
 const RESERVATION_ID_PREFIX = "reservation:";
 
+async function insertBookingWithSchemaFallback(payload) {
+  let currentPayload = { ...payload };
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const result = await supabaseAdmin
+      .from("bookings")
+      .insert(currentPayload)
+      .select("*")
+      .single();
+
+    if (!result.error) return result;
+
+    const message = String(result.error.message || "");
+    if (result.error.code === "PGRST204") {
+      if (message.includes("'student_email' column")) {
+        delete currentPayload.student_email;
+        continue;
+      }
+      if (message.includes("'reserved_at' column")) {
+        delete currentPayload.reserved_at;
+        continue;
+      }
+      if (message.includes("'created_at' column")) {
+        delete currentPayload.created_at;
+        continue;
+      }
+    }
+
+    if (result.error.code === "42703") {
+      if (message.toLowerCase().includes("student_email")) {
+        delete currentPayload.student_email;
+        continue;
+      }
+      if (message.toLowerCase().includes("reserved_at")) {
+        delete currentPayload.reserved_at;
+        continue;
+      }
+      if (message.toLowerCase().includes("created_at")) {
+        delete currentPayload.created_at;
+        continue;
+      }
+    }
+
+    return result;
+  }
+
+  return {
+    data: null,
+    error: new Error("Failed to insert booking using compatible schema"),
+  };
+}
+
 async function getReservationRowsForTeacherAndSlot(teacherId, timeSlot, studentId = null) {
   let query = supabaseAdmin
     .from("student_reservations")
@@ -81,37 +133,16 @@ async function bookSlot(req, res) {
   const reservationDuplicates = await getReservationRowsForTeacherAndSlot(teacherId, timeSlot, studentId);
   assert(!(duplicateReservations || []).length && !reservationDuplicates.length, "You already reserved this slot", 409);
 
-  let { data, error } = await supabaseAdmin
-    .from("bookings")
-    .insert({
-      student_name: studentName,
-      student_id: studentId,
-      student_email: req.user.email,
-      teacher_id: teacherId,
-      time_slot: timeSlot,
-      status: "pending",
-      reserved_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    })
-    .select("*")
-    .single();
-
-  // Backward compatibility: allow booking creation when reserved_at migration is pending.
-  if (error && (error.code === "42703" || String(error.message || "").toLowerCase().includes("reserved_at"))) {
-    ({ data, error } = await supabaseAdmin
-      .from("bookings")
-      .insert({
-        student_name: studentName,
-        student_id: studentId,
-        student_email: req.user.email,
-        teacher_id: teacherId,
-        time_slot: timeSlot,
-        status: "pending",
-        created_at: new Date().toISOString(),
-      })
-      .select("*")
-      .single());
-  }
+  let { data, error } = await insertBookingWithSchemaFallback({
+    student_name: studentName,
+    student_id: studentId,
+    student_email: req.user.email,
+    teacher_id: teacherId,
+    time_slot: timeSlot,
+    status: "pending",
+    reserved_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  });
 
   // Final fallback for environments where bookings writes are broken:
   // reserve in dedicated student_reservations table.
