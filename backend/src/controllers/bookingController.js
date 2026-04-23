@@ -48,18 +48,18 @@ async function bookSlot(req, res) {
   if (countError) throw countError;
   assert((count || 0) < MAX_BOOKINGS_PER_SLOT, "This time slot is full for this teacher", 409);
 
-  const { data: duplicateReservation, error: duplicateError } = await supabaseAdmin
+  const { data: duplicateReservations, error: duplicateError } = await supabaseAdmin
     .from("bookings")
     .select("id")
     .eq("student_id", studentId)
     .eq("teacher_id", teacherId)
     .eq("time_slot", timeSlot)
     .in("status", ACTIVE_BOOKING_STATUSES)
-    .maybeSingle();
+    .limit(1);
   if (duplicateError) throw duplicateError;
-  assert(!duplicateReservation, "You already reserved this slot", 409);
+  assert(!(duplicateReservations || []).length, "You already reserved this slot", 409);
 
-  const { data, error } = await supabaseAdmin
+  let { data, error } = await supabaseAdmin
     .from("bookings")
     .insert({
       student_name: studentName,
@@ -73,6 +73,23 @@ async function bookSlot(req, res) {
     })
     .select("*")
     .single();
+
+  // Backward compatibility: allow booking creation when reserved_at migration is pending.
+  if (error && (error.code === "42703" || String(error.message || "").toLowerCase().includes("reserved_at"))) {
+    ({ data, error } = await supabaseAdmin
+      .from("bookings")
+      .insert({
+        student_name: studentName,
+        student_id: studentId,
+        student_email: req.user.email,
+        teacher_id: teacherId,
+        time_slot: timeSlot,
+        status: "pending",
+        created_at: new Date().toISOString(),
+      })
+      .select("*")
+      .single());
+  }
 
   if (error) throw error;
 
