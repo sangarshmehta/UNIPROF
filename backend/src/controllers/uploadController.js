@@ -6,14 +6,14 @@ function getPublicUrl(filePath) {
   return data?.publicUrl || "";
 }
 
-async function uploadProfileImage(req, res) {
+async function uploadFileToProfileBucket(req, res, folder) {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
 
   const userId = String(req.user.sub || "");
   const ext = path.extname(req.file.originalname || "").toLowerCase() || ".jpg";
-  const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+  const filePath = `${folder}/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
   const { error } = await supabaseAdmin.storage.from("profile-images").upload(filePath, req.file.buffer, {
     contentType: req.file.mimetype,
@@ -27,4 +27,12 @@ async function uploadProfileImage(req, res) {
   });
 }
 
-module.exports = { uploadProfileImage };
+async function uploadProfileImage(req, res) {
+  return uploadFileToProfileBucket(req, res, "profile");
+}
+
+async function uploadTimetableImage(req, res) {
+  return uploadFileToProfileBucket(req, res, "timetable");
+}
+
+module.exports = { uploadProfileImage, uploadTimetableImage };

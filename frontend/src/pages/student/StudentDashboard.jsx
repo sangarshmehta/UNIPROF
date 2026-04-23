@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import TeacherCard from "../../components/teachers/TeacherCard.jsx";
@@ -54,7 +53,6 @@ export default function StudentDashboard() {
   }, [teachers, search, subject, rating, availability]);
 
   return (
-    <AppShell title="Search Teachers">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* --- Unified Smart Search Bar --- */}
@@ -122,6 +120,5 @@ export default function StudentDashboard() {
           </div>
         )}
       </div>
-    </AppShell>
   );
 }

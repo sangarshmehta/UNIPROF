@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import { getTeacherProfile, updateTeacherProfile } from "../../services/teacherService";
-import { uploadProfileImage } from "../../services/uploadService";
+import { uploadProfileImage, uploadTimetableImage } from "../../services/uploadService";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const LANGUAGES_LIST = [
   "English", "Spanish", "French", "German", "Chinese", "Japanese", "Hindi", "Arabic",
@@ -14,6 +14,7 @@ const LANGUAGES_LIST = [
 
 export default function EditTeacherProfilePage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [form, setForm] = useState({
     name: "",
     education_level: "BE / BTech",
@@ -22,6 +23,7 @@ export default function EditTeacherProfilePage() {
     subjects: [],
     bio: "",
     profile_image: "",
+    timetable_image: "",
   });
 
   const [langSearch, setLangSearch] = useState("");
@@ -31,6 +33,7 @@ export default function EditTeacherProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [timetableUploading, setTimetableUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -47,6 +50,7 @@ export default function EditTeacherProfilePage() {
           subjects: p.subjects || [],
           bio: p.bio || "",
           profile_image: p.profile_image || "",
+          timetable_image: p.timetable_image || "",
         });
       } catch (err) {
         setError("Failed to load profile");
@@ -68,6 +72,21 @@ export default function EditTeacherProfilePage() {
       setError("Image upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleTimetableUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setError("");
+      setTimetableUploading(true);
+      const res = await uploadTimetableImage(file);
+      setForm((prev) => ({ ...prev, timetable_image: res.public_url }));
+    } catch (err) {
+      setError(err.message || "Timetable upload failed");
+    } finally {
+      setTimetableUploading(false);
     }
   }
 
@@ -94,10 +113,9 @@ export default function EditTeacherProfilePage() {
     }
   }
 
-  if (loading) return <AppShell><EmptyState text="Loading profile..." loading /></AppShell>;
+  if (loading) return <EmptyState text="Loading profile..." loading />;
 
   return (
-    <AppShell title="Profile Settings">
       <div className="max-w-4xl mx-auto space-y-8 fade-in">
         <form onSubmit={handleSubmit} className="space-y-8">
 
@@ -134,6 +152,19 @@ export default function EditTeacherProfilePage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="glass-card p-8 space-y-4">
+                <h4 className="text-[10px] uppercase font-black tracking-widest opacity-60">Timetable Image</h4>
+                <label className="block w-full cursor-pointer rounded-xl border border-[var(--border-color)] bg-[var(--bg-light)] px-4 py-3 text-sm font-semibold">
+                  {timetableUploading ? "Uploading timetable..." : "Upload timetable image"}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleTimetableUpload} />
+                </label>
+                {form.timetable_image ? (
+                  <img src={form.timetable_image} alt="Timetable" className="w-full rounded-xl border border-[var(--border-color)] object-cover max-h-64" />
+                ) : (
+                  <p className="text-sm text-[var(--text-muted)]">No timetable uploaded yet.</p>
+                )}
               </div>
             </div>
 
@@ -248,8 +279,8 @@ export default function EditTeacherProfilePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    ["uniprof_token", "uniprof_role", "uniprof_name", "uniprof_gender"].forEach(k => localStorage.removeItem(k));
-                    window.location.href = "/login";
+                    logout();
+                    navigate("/login", { replace: true });
                   }}
                   className="px-6 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold transition-all hover:bg-red-100"
                 >
@@ -264,6 +295,5 @@ export default function EditTeacherProfilePage() {
         <Alert message={error} />
         <Alert type="success" message={success} />
       </div>
-    </AppShell>
   );
 }

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
-import { getTeacherSlots, publishSlot, deleteSlot } from "../../services/teacherService";
+import { getMyTeacherSlots, publishSlot, deleteSlot } from "../../services/teacherService";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -16,10 +15,11 @@ export default function TeacherSchedulePage() {
 
   async function loadSlots() {
     try {
-      const data = await getTeacherSlots();
+      setError("");
+      const data = await getMyTeacherSlots();
       setSlots(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError("Failed to load schedule");
+      setError(err.message || "Failed to load schedule");
     }
   }
 
@@ -35,27 +35,30 @@ export default function TeacherSchedulePage() {
   async function handleAddSlot(e) {
     e.preventDefault();
     try {
+      setError("");
+      setSuccess("");
       const timeSlotString = `${newSlot.day.slice(0, 3)} ${newSlot.start} - ${newSlot.end}${newSlot.recurring ? ' (Weekly)' : ''}`;
       await publishSlot({ time_slot: timeSlotString });
       setSuccess("Slot added to your schedule!");
       await loadSlots();
     } catch (err) {
-      setError("Failed to add slot");
+      setError(err.message || "Failed to add slot");
     }
   }
 
   async function handleDeleteSlot(id) {
     try {
+      setError("");
+      setSuccess("");
       await deleteSlot(id);
       setSuccess("Slot removed");
       await loadSlots();
     } catch (err) {
-      setError("Failed to delete slot");
+      setError(err.message || "Failed to delete slot");
     }
   }
 
   return (
-    <AppShell title="Manage Schedule">
       <div className="max-w-5xl mx-auto space-y-10 fade-in">
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -127,7 +130,7 @@ export default function TeacherSchedulePage() {
             {loading ? (
               <EmptyState text="Loading slots..." loading />
             ) : slots.length === 0 ? (
-              <EmptyState text="You haven't added any slots yet." />
+              <EmptyState text="You haven't added any slots yet." actionText="Retry" onAction={loadSlots} />
             ) : (
               <div className="space-y-4">
                 {slots.map(slot => (
@@ -160,6 +163,5 @@ export default function TeacherSchedulePage() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

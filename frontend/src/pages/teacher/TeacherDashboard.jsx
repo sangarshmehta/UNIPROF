@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import { acceptBooking, rejectBooking, getTeacherBookings } from "../../services/teacherService";
@@ -53,7 +52,6 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <AppShell title="Mentor Dashboard">
       <div className="space-y-10 fade-in">
         
         {/* --- Stats Panel --- */}
@@ -161,6 +159,5 @@ export default function TeacherDashboard() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import SlotList from "../../components/slots/SlotList.jsx";
@@ -116,11 +115,10 @@ export default function TeacherDetailsPage() {
     }
   }
 
-  if (loading) return <AppShell><EmptyState text="Loading profile..." loading /></AppShell>;
-  if (!teacher) return <AppShell><EmptyState text="Mentor not found." /></AppShell>;
+  if (loading) return <EmptyState text="Loading profile..." loading />;
+  if (!teacher) return <EmptyState text="Mentor not found." />;
 
   return (
-    <AppShell title={teacher.name}>
       <div className="max-w-6xl mx-auto space-y-8 fade-in">
         
         {/* --- Top Profile Header --- */}
@@ -257,9 +255,22 @@ export default function TeacherDetailsPage() {
                   bookingSlot={bookingSlot} 
                 />
              </section>
+
+             <section className="glass-card p-8">
+                <h3 className="text-2xl font-black mb-3">Timetable</h3>
+                {teacher.timetable_image ? (
+                  <div className="space-y-3">
+                    <img src={teacher.timetable_image} alt={`${teacher.name} timetable`} className="w-full rounded-2xl border border-[var(--border-color)] max-h-[480px] object-contain bg-[var(--bg-light)]" />
+                    <a href={teacher.timetable_image} target="_blank" rel="noreferrer" className="btn-primary">
+                      View Timetable
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-[var(--text-muted)]">Timetable not uploaded yet.</p>
+                )}
+             </section>
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

@@ -8,3 +8,12 @@ export function uploadProfileImage(file) {
     body: formData,
   });
 }
+
+export function uploadTimetableImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiRequest("/api/uploads/timetable-image", {
+    method: "POST",
+    body: formData,
+  });
+}

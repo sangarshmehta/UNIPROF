@@ -7,6 +7,7 @@ const {
   listTeachers,
   getTeacherById,
   getSlots,
+  getMySlots,
   teacherDashboard,
   teacherBookings,
   getTeacherProfile,
@@ -22,6 +23,7 @@ const router = express.Router();
 router.get("/teachers", asyncHandler(listTeachers));
 router.get("/teachers/:id", asyncHandler(getTeacherById));
 router.get("/slots/:teacher_id", asyncHandler(getSlots));
+router.get("/teacher/slots", requireAuth, requireTeacher, asyncHandler(getMySlots));
 
 router.get("/teacher/dashboard", requireAuth, requireTeacher, asyncHandler(teacherDashboard));
 router.get("/teacher/profile", requireAuth, requireTeacher, asyncHandler(getTeacherProfile));

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 export default function TeacherCard({ teacher }) {
-  const { id, name, subjects, rating, profile_image, availability } = teacher;
+  const { id, name, subjects, rating, profile_image, availability, timetable_image } = teacher;
 
   return (
     <div className="glass-card flex flex-col overflow-hidden group">
@@ -53,7 +53,7 @@ export default function TeacherCard({ teacher }) {
           to={`/teachers/${id}`}
           className="mt-auto btn-primary w-full group-hover:shadow-lg transition-all"
         >
-          Book Session
+          {timetable_image ? "View Timetable & Book" : "Book Session"}
           <span className="group-hover:translate-x-1 transition-transform">→</span>
         </Link>
       </div>

@@ -12,12 +12,14 @@ export default function RegisterPage() {
     email: "",
     password: "",
   });
+  const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setFieldErrors({ name: "", email: "", password: "" });
     const payload = {
       name: form.name.trim(),
       gender: form.gender,
@@ -25,8 +27,19 @@ export default function RegisterPage() {
       password: form.password,
     };
 
-    if (!payload.name || !payload.gender || !payload.email || !payload.password) {
-      setError("All fields are required.");
+    const nextFieldErrors = {
+      name: payload.name ? "" : "Full name is required.",
+      email: payload.email ? "" : "Email is required.",
+      password: payload.password ? "" : "Password is required.",
+    };
+    if (!nextFieldErrors.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      nextFieldErrors.email = "Enter a valid email address.";
+    }
+    if (!nextFieldErrors.password && payload.password.length < 6) {
+      nextFieldErrors.password = "Password must be at least 6 characters.";
+    }
+    if (nextFieldErrors.name || nextFieldErrors.email || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
@@ -59,6 +72,7 @@ export default function RegisterPage() {
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               required
             />
+            {fieldErrors.name ? <p className="input-error-text">{fieldErrors.name}</p> : null}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gender</label>
@@ -83,6 +97,7 @@ export default function RegisterPage() {
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
             required
           />
+          {fieldErrors.email ? <p className="input-error-text">{fieldErrors.email}</p> : null}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
@@ -95,6 +110,7 @@ export default function RegisterPage() {
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
             required
           />
+          {fieldErrors.password ? <p className="input-error-text">{fieldErrors.password}</p> : null}
           </div>
           <Alert message={error} />
           <button

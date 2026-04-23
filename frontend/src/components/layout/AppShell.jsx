@@ -6,7 +6,15 @@ import NotificationBell from "../notifications/NotificationBell.jsx";
 export default function AppShell({ title, children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, logout, user } = useAuth();
+  const { role, logout, user, isAuthenticated } = useAuth();
+  const homePath = isAuthenticated
+    ? role === "teacher"
+      ? "/teacher"
+      : role === "admin"
+        ? "/admin"
+        : "/student"
+    : "/login";
+
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -45,7 +53,7 @@ export default function AppShell({ title, children }) {
           >
             <span className="text-xl">☰</span>
           </button>
-          <Link to="/" className="text-2xl font-bold text-blue-600 tracking-tight">
+          <Link to={homePath} className="text-2xl font-bold text-blue-600 tracking-tight">
             UniProf
           </Link>
         </div>

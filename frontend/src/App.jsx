@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+import AppLayout from "./components/layout/AppLayout.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
@@ -39,89 +40,97 @@ function AppRoutes() {
           }
         />
 
-        {/* --- Student Routes --- */}
         <Route
-          path="/student"
           element={
-            <ProtectedRoute role="student">
-              <StudentDashboard />
+            <ProtectedRoute>
+              <AppLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/student/profile"
-          element={
-            <ProtectedRoute role="student">
-              <StudentProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/wishlist"
-          element={
-            <ProtectedRoute role="student">
-              <WishlistPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/bookings"
-          element={
-            <ProtectedRoute role="student">
-              <StudentBookingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teachers/:id"
-          element={
-            <ProtectedRoute role="student">
-              <TeacherDetailsPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          {/* --- Student Routes --- */}
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute role="student">
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/profile"
+            element={
+              <ProtectedRoute role="student">
+                <StudentProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/wishlist"
+            element={
+              <ProtectedRoute role="student">
+                <WishlistPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/bookings"
+            element={
+              <ProtectedRoute role="student">
+                <StudentBookingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teachers/:id"
+            element={
+              <ProtectedRoute role="student">
+                <TeacherDetailsPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* --- Teacher Routes --- */}
-        <Route
-          path="/teacher"
-          element={
-            <ProtectedRoute role="teacher">
-              <TeacherDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/bookings"
-          element={
-            <ProtectedRoute role="teacher">
-              <TeacherDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/schedule"
-          element={
-            <ProtectedRoute role="teacher">
-              <TeacherSchedulePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/profile/edit"
-          element={
-            <ProtectedRoute role="teacher">
-              <EditTeacherProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* --- Teacher Routes --- */}
+          <Route
+            path="/teacher"
+            element={
+              <ProtectedRoute role="teacher">
+                <TeacherDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/bookings"
+            element={
+              <ProtectedRoute role="teacher">
+                <TeacherDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/schedule"
+            element={
+              <ProtectedRoute role="teacher">
+                <TeacherSchedulePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/profile/edit"
+            element={
+              <ProtectedRoute role="teacher">
+                <EditTeacherProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

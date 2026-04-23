@@ -71,6 +71,19 @@ async function getSlots(req, res) {
   return res.json(slots);
 }
 
+async function getMySlots(req, res) {
+  const teacherId = Number(req.user.teacher_id);
+  assert(Number.isFinite(teacherId), "Forbidden", 403);
+
+  const { data, error } = await supabaseAdmin
+    .from("availability")
+    .select("id,time_slot,created_at")
+    .eq("teacher_id", teacherId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return res.json(data || []);
+}
+
 async function teacherDashboard(req, res) {
   const teacherId = Number(req.user.teacher_id);
   assert(Number.isFinite(teacherId), "Forbidden", 403);
@@ -121,6 +134,7 @@ async function updateTeacherProfile(req, res) {
   if (req.body?.room_number !== undefined) payload.room_number = String(req.body.room_number).trim();
   if (req.body?.bio !== undefined) payload.bio = String(req.body.bio).trim();
   if (req.body?.profile_image !== undefined) payload.profile_image = String(req.body.profile_image).trim();
+  if (req.body?.timetable_image !== undefined) payload.timetable_image = String(req.body.timetable_image).trim();
   
   // SaaS Extensions
   if (req.body?.education_level !== undefined) payload.education_level = String(req.body.education_level).trim();
@@ -239,6 +253,7 @@ module.exports = {
   listTeachers,
   getTeacherById,
   getSlots,
+  getMySlots,
   teacherDashboard,
   teacherBookings,
   getTeacherProfile,

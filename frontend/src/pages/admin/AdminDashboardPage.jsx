@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import {
@@ -71,7 +70,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <AppShell title="Admin Dashboard" subtitle="Manage users, teacher approvals, and all bookings.">
+    <>
       <Alert message={error} />
       <Alert type="success" message={success} />
 
@@ -165,6 +164,6 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </section>
-    </AppShell>
+    </>
   );
 }

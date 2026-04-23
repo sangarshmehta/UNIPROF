@@ -12,6 +12,10 @@ export function getTeacherSlots(teacherId) {
   return apiRequest(`/api/slots/${teacherId}`);
 }
 
+export function getMyTeacherSlots() {
+  return apiRequest("/api/teacher/slots");
+}
+
 export function getTeacherDashboard() {
   return apiRequest("/api/teacher/dashboard");
 }

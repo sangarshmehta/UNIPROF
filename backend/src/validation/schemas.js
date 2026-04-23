@@ -28,6 +28,7 @@ const teacherProfileSchema = z.object({
   room_number: z.string().trim().optional(),
   bio: z.string().trim().optional(),
   profile_image: z.string().trim().optional(),
+  timetable_image: z.string().trim().optional(),
   education_level: z.string().trim().optional(),
   specialization: z.array(z.string().trim().min(1)).optional(),
   languages: z.array(z.string().trim().min(1)).optional(),

@@ -9,6 +9,7 @@ export default function LoginPage() {
   const { login } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
+  const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -20,10 +21,18 @@ export default function LoginPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setFieldErrors({ email: "", password: "" });
 
     const email = form.email.trim().toLowerCase();
-    if (!email || !form.password) {
-      setError("Email and password are required.");
+    const nextFieldErrors = {
+      email: email ? "" : "Email is required.",
+      password: form.password ? "" : "Password is required.",
+    };
+    if (!nextFieldErrors.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextFieldErrors.email = "Enter a valid email address.";
+    }
+    if (nextFieldErrors.email || nextFieldErrors.password) {
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
@@ -67,6 +76,7 @@ export default function LoginPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                 required
               />
+              {fieldErrors.email ? <p className="input-error-text">{fieldErrors.email}</p> : null}
             </div>
             
             <div className="space-y-2">
@@ -81,6 +91,7 @@ export default function LoginPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                 required
               />
+              {fieldErrors.password ? <p className="input-error-text">{fieldErrors.password}</p> : null}
             </div>
 
             {error && <Alert message={error} />}

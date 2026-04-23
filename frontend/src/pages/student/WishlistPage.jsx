@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import AppShell from "../../components/layout/AppShell.jsx";
+import { useNavigate } from "react-router-dom";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import TeacherCard from "../../components/teachers/TeacherCard.jsx";
 import { getWishlist } from "../../services/studentService";
 
 export default function WishlistPage() {
+  const navigate = useNavigate();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,7 +28,6 @@ export default function WishlistPage() {
   }, []);
 
   return (
-    <AppShell title="My Wishlist">
       <div className="max-w-5xl mx-auto space-y-8 fade-in">
         <Alert message={error} />
 
@@ -37,7 +37,7 @@ export default function WishlistPage() {
           <EmptyState 
             text="Your wishlist is empty. Start exploring mentors!" 
             actionText="Browse Teachers" 
-            onAction={() => window.location.href = '/student'} 
+            onAction={() => navigate("/student")} 
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -47,6 +47,5 @@ export default function WishlistPage() {
           </div>
         )}
       </div>
-    </AppShell>
   );
 }

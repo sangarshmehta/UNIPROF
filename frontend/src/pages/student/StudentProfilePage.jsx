@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import AppShell from "../../components/layout/AppShell.jsx";
+import { useNavigate } from "react-router-dom";
 import Alert from "../../components/ui/Alert.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { getMyStudentProfile, updateMyStudentProfile } from "../../services/studentService";
 import { uploadProfileImage } from "../../services/uploadService";
 
 export default function StudentProfilePage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [form, setForm] = useState({ name: "", gender: "Male", profile_image: "", phone_number: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,10 +63,9 @@ export default function StudentProfilePage() {
     }
   }
 
-  if (loading) return <AppShell><EmptyState text="Loading profile..." loading /></AppShell>;
+  if (loading) return <EmptyState text="Loading profile..." loading />;
 
   return (
-    <AppShell title="Profile Settings">
       <div className="max-w-4xl mx-auto space-y-8 fade-in">
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -166,8 +168,8 @@ export default function StudentProfilePage() {
                   <button 
                      type="button"
                       onClick={() => {
-                        ["uniprof_token", "uniprof_role", "uniprof_name", "uniprof_gender"].forEach(k => localStorage.removeItem(k));
-                        window.location.href = "/login";
+                        logout();
+                        navigate("/login", { replace: true });
                       }}
                      className="px-6 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold transition-all hover:bg-red-100"
                   >
@@ -178,6 +180,5 @@ export default function StudentProfilePage() {
           </div>
         </form>
       </div>
-    </AppShell>
   );
 }
