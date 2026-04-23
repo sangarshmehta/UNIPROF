@@ -121,6 +121,12 @@ async function updateTeacherProfile(req, res) {
   if (req.body?.room_number !== undefined) payload.room_number = String(req.body.room_number).trim();
   if (req.body?.bio !== undefined) payload.bio = String(req.body.bio).trim();
   if (req.body?.profile_image !== undefined) payload.profile_image = String(req.body.profile_image).trim();
+  
+  // SaaS Extensions
+  if (req.body?.education_level !== undefined) payload.education_level = String(req.body.education_level).trim();
+  if (req.body?.specialization !== undefined) payload.specialization = Array.isArray(req.body.specialization) ? req.body.specialization : [];
+  if (req.body?.languages !== undefined) payload.languages = Array.isArray(req.body.languages) ? req.body.languages : [];
+
   if (req.body?.subjects !== undefined) {
     const subjects = Array.isArray(req.body.subjects)
       ? req.body.subjects
@@ -184,6 +190,51 @@ async function acceptTeacherBooking(req, res) {
   return res.json(updated);
 }
 
+async function rejectTeacherBooking(req, res) {
+  const teacherId = Number(req.user.teacher_id);
+  const bookingId = Number(req.params.id);
+  assert(Number.isFinite(teacherId), "Forbidden", 403);
+
+  const { data: updated, error } = await supabaseAdmin
+    .from("bookings")
+    .update({ status: "rejected" })
+    .eq("id", bookingId)
+    .eq("teacher_id", teacherId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return res.json(updated);
+}
+
+async function publishSlot(req, res) {
+  const teacherId = Number(req.user.teacher_id);
+  assert(Number.isFinite(teacherId), "Forbidden", 403);
+  const { time_slot } = req.body;
+  assert(time_slot, "time_slot is required");
+
+  const { data, error } = await supabaseAdmin
+    .from("availability")
+    .insert({ teacher_id: teacherId, time_slot })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return res.status(201).json(data);
+}
+
+async function deleteSlot(req, res) {
+  const teacherId = Number(req.user.teacher_id);
+  const slotId = Number(req.params.id);
+  assert(Number.isFinite(teacherId), "Forbidden", 403);
+
+  const { error } = await supabaseAdmin
+    .from("availability")
+    .delete()
+    .eq("id", slotId)
+    .eq("teacher_id", teacherId);
+  if (error) throw error;
+  return res.status(204).send();
+}
+
 module.exports = {
   listTeachers,
   getTeacherById,
@@ -193,4 +244,8 @@ module.exports = {
   getTeacherProfile,
   updateTeacherProfile,
   acceptTeacherBooking,
+  rejectTeacherBooking,
+  publishSlot,
+  deleteSlot,
 };
+

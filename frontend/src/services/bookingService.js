@@ -6,3 +6,7 @@ export function createBooking(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function getMyBookings() {
+  return apiRequest("/api/bookings/me");
+}

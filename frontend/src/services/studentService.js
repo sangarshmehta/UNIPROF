@@ -17,3 +17,13 @@ export function rateTeacher(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function getWishlist() {
+  return apiRequest("/api/wishlist");
+}
+
+export function toggleWishlist(teacherId) {
+  return apiRequest(`/api/wishlist/${teacherId}`, {
+    method: "POST"
+  });
+}

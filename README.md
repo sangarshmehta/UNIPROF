@@ -1,140 +1,160 @@
-# UNIPROF Production SaaS
+# UniProf SaaS Platform
 
-Production-grade full-stack architecture:
+UniProf is a production-grade University Mentorship SaaS ecosystem designed to connect students with academic mentors through a high-performance, visually stunning, and highly secure platform.
 
-- `frontend` -> Vercel (React + Vite)
-- `backend` -> Render (Express API)
-- `database` -> Supabase (Postgres + Storage + RLS)
+## 🚀 Vision
+To revolutionize university mentorship by providing a seamless, automated, and professional booking experience that empowers both students and teachers.
 
-## Project structure
+## ✨ Premium SaaS Features
 
-```text
-UNIPROF/
-  frontend/
-    src/
-      components/
-      context/
-      pages/
-      services/
-    .env.example
-    package.json
-  backend/
-    src/
-      config/
-      controllers/
-      middleware/
-      routes/
-      services/
-      validation/
-      utils/
-      app.js
-      index.js
-    supabase/
-      migrations/
-        001_schema.sql
-        002_rls.sql
-        003_storage.sql
-    .env.example
-    package.json
-```
+### 🎨 Modern UI/UX (Glassmorphism)
+- **Stunning Design**: A high-end glassmorphic interface with vibrant gradients and dark mode persistence.
+- **Smart Search**: A unified, intelligent search bar that combines Subject, Rating, and Availability filters into a single cohesive UI element.
+- **Micro-interactions**: Smooth fade-ins, slide-ups, and hover effects that create a professional, "live" feel.
+- **Responsive Layout**: A sticky navbar and drawer-style sidebar optimized for both desktop and mobile productivity.
 
-## Implemented enterprise modules
+### 📅 Advanced Scheduling System
+- **Weekly Schedule**: Monday to Sunday support with recurring slot logic.
+- **Capacity Tracking**: Intelligent slot management with a 10-student capacity limit and real-time "remaining seats" indicators.
+- **Mentor Controls**: Teachers can manually publish, edit, or delete slots with immediate synchronization.
 
-- Student, Teacher, and Admin RBAC
-- Admin dashboard APIs (users, bookings, teacher approval, user delete)
-- Unified profile editing for student/teacher with image upload
-- Supabase Storage upload endpoint for profile images
-- Notification system:
-  - booking created -> notify teacher
-  - booking accepted -> notify student
-- Rate limiting + JWT role protection + input validation
-- Strict CORS allow-list handling
-- Global frontend loading bar + toast notifications + API error normalization
-- Notification bell with unread count and mark-read actions
+### 👨‍🏫 Mentor Management
+- **Rich Profiles**: Expanded mentor profiles including Education Level (BTech, MTech, PhD), Specialization tags, and 100+ Language proficiency.
+- **Stats Panel**: A real-time dashboard for mentors to track total bookings, pending requests, and average ratings.
+- **Booking Panel**: A dedicated interface for mentors to accept or reject student requests with automated student notifications.
 
-## Supabase setup
+### 🎓 Student Ecosystem
+- **Wishlist System**: Save and track favorite mentors for quick access.
+- **Verified Reviews**: A robust rating system that enforces reviews *only after* a session is marked as completed by the mentor.
+- **My Bookings**: A centralized hub to track session history and status (Pending, Accepted, Completed).
 
-Run migrations in order:
+## 🛠 Tech Stack
+- **Frontend**: React.js with Vanilla CSS (Glassmorphism System).
+- **Backend**: Node.js & Express with Supabase Admin SDK.
+- **Database**: PostgreSQL (via Supabase) with advanced identity tracking.
+- **Auth**: Secure JWT-based RBAC (Role Based Access Control).
 
-1. `backend/supabase/migrations/001_schema.sql`
-2. `backend/supabase/migrations/002_rls.sql`
-3. `backend/supabase/migrations/003_storage.sql`
+## 🏗 Architecture
+The platform follows a strict decoupled architecture for maximum scalability:
+- **Frontend Services**: Abstracted `apiClient` with specialized services for Teachers, Students, and Bookings.
+- **Backend Controllers**: Highly optimized PostgreSQL queries with atomic updates for ratings and capacity.
+- **Security**: Enforced CORS, strict schema validation, and SQL-level primary key synchronization.
 
-### Seed admin user
+## 📦 Setup & Installation
 
-Seed at least one admin user in `users` table:
+### Prerequisites
+- Node.js v18+
+- A Supabase project (free tier works)
 
-- `role = 'admin'`
-- valid `email` and `password_hash`
-
-Admin registration is intentionally disabled from public flows.
-
-## Environment variables
-
-### Frontend (`frontend/.env`)
-
-```env
-VITE_API_URL=https://your-render-backend.onrender.com
-```
-
-### Backend (`backend/.env`)
-
-```env
-NODE_ENV=production
-PORT=5000
-JWT_SECRET=your-long-random-secret
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-CORS_ORIGIN=https://your-vercel-project.vercel.app
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=300
-AUTH_RATE_LIMIT_MAX_REQUESTS=25
-```
-
-## Deploy
-
-### Backend on Render
-
-1. Create a Render Web Service from `backend`.
-2. Build command: `npm install`
-3. Start command: `npm start`
-4. Add env vars from `backend/.env`.
-5. Deploy and copy backend URL.
-
-### Frontend on Vercel
-
-1. Import project with root directory `frontend`.
-2. Build command: `npm run build`
-3. Output directory: `dist`
-4. Add `VITE_API_URL` to Vercel project env.
-5. Deploy.
-
-## Local run
-
-Backend:
-
+### 1. Clone & Install
 ```bash
+git clone <repo-url>
+cd UNIPROF
+
+# Backend
 cd backend
 npm install
-npm start
+
+# Frontend
+cd ../frontend
+npm install
 ```
 
-Frontend:
+### 2. Configure Environment
+Copy the example and fill in your Supabase credentials:
+```bash
+cp backend/.env.example backend/.env
+```
+
+Required variables:
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | A long random string for signing tokens |
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (backend only) |
+| `CORS_ORIGIN` | Comma-separated allowed origins (see below) |
+
+### 3. CORS Configuration
+The backend uses a dynamic CORS allowlist parsed from the `CORS_ORIGIN` environment variable.
 
 ```bash
-cd frontend
-npm install
-npm run dev
+# Development (allow everything)
+CORS_ORIGIN=*
+
+# Production (comma-separated, no spaces around commas)
+CORS_ORIGIN=https://uniprof.vercel.app,https://uniprof-staging.vercel.app
+
+# Local development with specific port
+CORS_ORIGIN=http://localhost:5173
 ```
 
-## Verification checklist
+**Behavior:**
+- `*` → allows all origins (development only)
+- Empty + `NODE_ENV=development` → allows all origins
+- Empty + `NODE_ENV=production` → blocks all origins (fail-safe)
+- Any `*.vercel.app` origin is always allowed (preview deploys)
+- All other origins must be explicitly listed
 
-- Auth and role routing:
-  - student -> `/student`
-  - teacher -> `/teacher`
-  - admin -> `/admin`
-- Teacher approval flow works via admin dashboard.
-- Profile image upload stores file in `profile-images` bucket and URL persists.
-- Notifications update in bell when booking is created/accepted.
-- RLS policies are active and prevent cross-user data access.
+### 4. Run Database Migrations
+Execute migrations **in order** in the Supabase SQL Editor:
+
+| Order | File | Purpose |
+|-------|------|---------|
+| 1 | `001_schema.sql` | Core tables: users, students, teachers, bookings |
+| 2 | `002_rls.sql` | Row-level security policies |
+| 3 | `003_storage.sql` | Storage buckets for profile images |
+| 4 | `004_advanced_scheduling.sql` | Availability table, ratings table, scheduling logic |
+| 5 | `005_saas_extensions.sql` | Teacher profile extensions, wishlist table, capacity tracking |
+
+> ⚠️ **All 5 migrations are required.** Skipping `004` or `005` will cause runtime errors in scheduling and wishlist endpoints.
+
+### 5. Start Development Servers
+```bash
+# Backend (from /backend)
+npm run dev    # → http://localhost:5000
+
+# Frontend (from /frontend)
+npm run dev    # → http://localhost:5173
+```
+
+### 6. Run Tests
+```bash
+# Backend (from /backend)
+npm test
+
+# Frontend (from /frontend)
+npm test
+```
+
+Set `TEST_SKIP_DB=true` to skip database-dependent tests in CI environments without Supabase credentials.
+
+## 🔒 Production Hardening
+- **Automated Validation**: `scripts/check-deploy.js` ensures environment integrity before release.
+- **Unit & Integration Testing**: Comprehensive coverage with Vitest and Supertest.
+- **System Stability**: Backward compatible migrations and non-breaking structural extensions.
+
+## 📁 Key Directories
+```
+UNIPROF/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/    # Business logic
+│   │   ├── routes/         # API endpoints
+│   │   ├── middleware/     # Auth, validation, rate limiting
+│   │   ├── validation/    # Zod schemas
+│   │   └── config/        # Environment & Supabase setup
+│   ├── supabase/migrations/  # Ordered SQL migrations (001–005)
+│   └── tests/             # Supertest integration tests
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # Reusable UI (AppShell, TeacherCard, SlotList, etc.)
+│   │   ├── pages/         # Route-level pages
+│   │   ├── services/      # API client abstraction layer
+│   │   └── context/       # React auth context
+│   └── __tests__/         # Vitest smoke tests
+└── scripts/               # Deployment validation
+```
+
+---
+**UniProf** — Empowering the next generation of academic mentorship.

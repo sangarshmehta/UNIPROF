@@ -103,3 +103,57 @@ describe("Unknown route", () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 });
+
+// ── SaaS Extension endpoint guards (no DB required) ──────────
+// These verify that auth middleware blocks unauthenticated access.
+// They are fully deterministic and do NOT hit Supabase.
+
+describe("GET /api/bookings/me (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).get("/api/bookings/me");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("GET /api/wishlist (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).get("/api/wishlist");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("POST /api/wishlist/:id (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).post("/api/wishlist/1");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("GET /api/teacher/bookings (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).get("/api/teacher/bookings");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("POST /api/teacher/bookings/:id/reject (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).post("/api/teacher/bookings/1/reject");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("POST /api/teacher/slots (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).post("/api/teacher/slots");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("DELETE /api/teacher/slots/:id (protected)", () => {
+  it("returns 401 when no token sent", async () => {
+    const res = await request(app).delete("/api/teacher/slots/1");
+    expect(res.statusCode).toBe(401);
+  });
+});
+

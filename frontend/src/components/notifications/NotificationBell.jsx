@@ -1,105 +1,81 @@
-import { useEffect, useState } from "react";
-import {
-  getNotifications,
-  getUnreadNotificationCount,
-  markAllNotificationsRead,
-  markNotificationRead,
-} from "../../services/notificationService";
+import { useState, useEffect } from "react";
+import { apiRequest } from "../../services/apiClient";
 
 export default function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [count, setCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  async function refreshCount() {
+  async function loadNotifications() {
     try {
-      const result = await getUnreadNotificationCount();
-      setCount(Number(result?.count) || 0);
-    } catch (_error) {
-      setCount(0);
+      const data = await apiRequest("/api/notifications");
+      setNotifications(Array.isArray(data) ? data : []);
+      setUnreadCount(data.filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error("Failed to load notifications");
     }
   }
 
   useEffect(() => {
-    refreshCount();
-    const timer = setInterval(refreshCount, 30000);
-    return () => clearInterval(timer);
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
   }, []);
 
-  async function toggleOpen() {
-    const next = !open;
-    setOpen(next);
-    if (!next) return;
+  async function markAsRead(id) {
     try {
-      setLoading(true);
-      const list = await getNotifications();
-      setNotifications(Array.isArray(list) ? list : []);
-    } finally {
-      setLoading(false);
+      await apiRequest(`/api/notifications/${id}/read`, { method: "PUT" });
+      loadNotifications();
+    } catch (err) {
+      console.error("Failed to mark as read");
     }
-  }
-
-  async function onRead(item) {
-    await markNotificationRead(item.id);
-    setNotifications((prev) => prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n)));
-    setCount((prev) => Math.max(0, prev - 1));
-  }
-
-  async function onReadAll() {
-    await markAllNotificationsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    setCount(0);
   }
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={toggleOpen}
-        className="relative rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 transition"
+      <button 
+        onClick={() => setOpen(!open)}
+        className="w-10 h-10 rounded-xl bg-[var(--bg-light)] border border-[var(--border-color)] flex items-center justify-center text-xl hover:bg-blue-50 hover:border-blue-200 transition-all relative"
       >
-        Bell
-        {count > 0 ? (
-          <span className="absolute -top-2 -right-2 inline-flex min-w-5 justify-center rounded-full bg-red-600 px-1 text-[10px] text-white">
-            {count}
+        🔔
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+            {unreadCount}
           </span>
-        ) : null}
+        )}
       </button>
 
-      {open ? (
-        <div className="absolute right-0 z-30 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-          <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-sm font-semibold">Notifications</h4>
-            <button
-              type="button"
-              onClick={onReadAll}
-              className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
-            >
-              Mark all read
-            </button>
-          </div>
-          {loading ? <p className="text-xs text-slate-500">Loading...</p> : null}
-          {!loading && !notifications.length ? <p className="text-xs text-slate-500">No notifications.</p> : null}
-          <ul className="max-h-64 space-y-2 overflow-y-auto">
-            {notifications.map((item) => (
-              <li key={item.id} className={`rounded-lg border p-2 ${item.is_read ? "border-slate-200" : "border-indigo-200 bg-indigo-50/50"}`}>
-                <p className="text-xs font-semibold text-slate-800">{item.title}</p>
-                <p className="text-xs text-slate-600">{item.message}</p>
-                {!item.is_read ? (
-                  <button
-                    type="button"
-                    onClick={() => onRead(item)}
-                    className="mt-1 rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)}></div>
+          <div className="absolute right-0 mt-3 w-80 glass-card p-4 z-50 shadow-2xl slide-up max-h-[400px] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 px-2">
+               <h4 className="text-sm font-black uppercase tracking-widest opacity-60">Notifications</h4>
+               {unreadCount > 0 && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{unreadCount} New</span>}
+            </div>
+
+            <div className="space-y-2">
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center text-[var(--text-muted)] text-sm font-medium italic">
+                  All caught up!
+                </div>
+              ) : (
+                notifications.map(n => (
+                  <div 
+                    key={n.id} 
+                    onClick={() => markAsRead(n.id)}
+                    className={`p-3 rounded-xl cursor-pointer transition-all border ${n.is_read ? 'bg-transparent border-transparent opacity-60' : 'bg-blue-50/50 border-blue-100 hover:bg-blue-50 shadow-sm'}`}
                   >
-                    Mark read
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+                    <div className="font-bold text-xs mb-1">{n.title}</div>
+                    <div className="text-[11px] text-[var(--text-muted)] leading-tight">{n.message}</div>
+                    <div className="text-[9px] mt-2 opacity-40 font-bold uppercase">{new Date(n.created_at).toLocaleTimeString()}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

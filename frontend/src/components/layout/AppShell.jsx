@@ -3,116 +3,89 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 
-export default function AppShell({ title, subtitle, children }) {
+export default function AppShell({ title, children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, logout } = useAuth();
+  const { role, logout, user } = useAuth();
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
+    const theme = isDarkMode ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
   }, [isDarkMode]);
+
+  const navLinks = [
+    { label: "Dashboard", path: role === "teacher" ? "/teacher" : role === "admin" ? "/admin" : "/student", icon: "📊" },
+    { label: "Search Teachers", path: "/student", icon: "🔍", roles: ["student"] },
+    { label: "Bookings", path: role === "teacher" ? "/teacher/bookings" : "/student/bookings", icon: "📅" },
+    { label: "Wishlist", path: "/student/wishlist", icon: "❤️", roles: ["student"] },
+    { label: "Settings", path: role === "teacher" ? "/teacher/profile/edit" : "/student/profile", icon: "⚙️" },
+  ].filter(link => !link.roles || link.roles.includes(role));
 
   function handleLogout() {
     logout();
     navigate("/login", { replace: true });
   }
 
-  function handleSearch(e) {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/student?search=${encodeURIComponent(searchQuery)}`);
-    }
-  }
-
   return (
-    <div className="min-h-screen text-[var(--text-main)] transition-colors duration-200">
-      <nav className="glass-card sticky top-0 z-50 border-b border-[var(--border-color)] px-4 py-3 sm:px-6 flex items-center justify-between rounded-none shadow-sm">
-        {/* LEFT: Logo */}
-        <div className="flex items-center">
-          <Link to={role === "teacher" ? "/teacher" : role === "admin" ? "/admin" : "/student"} className="text-2xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
-            UNIPROF
+    <div className="app-container">
+      {/* --- Sticky Navbar --- */}
+      <nav className="navbar-sticky px-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {/* Hamburger (visible on mobile, toggle drawer) */}
+          <button 
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            className="p-2 hover:bg-[var(--border-color)] rounded-lg transition-colors"
+          >
+            <span className="text-xl">☰</span>
+          </button>
+          <Link to="/" className="text-2xl font-bold text-blue-600 tracking-tight">
+            UniProf
           </Link>
         </div>
 
-        {/* CENTER: Search Bar (Student only or all) */}
-        {role === "student" && (
-          <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-md mx-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search teacher, subject..."
-                className="w-full bg-[var(--bg-light)] border border-[var(--border-color)] text-[var(--text-main)] rounded-full px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit" className="absolute right-3 top-2 text-slate-400 hover:text-blue-500">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              </button>
-            </div>
-          </form>
-        )}
+        {/* Center Title */}
+        <div className="hidden sm:block text-lg font-semibold text-[var(--text-main)]">
+          {title || "Dashboard"}
+        </div>
 
-        {/* RIGHT: Navigation & Profile */}
-        <div className="flex items-center gap-3 md:gap-5">
-          {role === "student" && (
-            <>
-              <Link className="hidden md:block text-sm font-medium hover:text-blue-600 transition" to="/student">Teachers</Link>
-            </>
-          )}
-          {role === "teacher" && (
-            <Link className="hidden md:block text-sm font-medium hover:text-blue-600 transition" to="/teacher">Dashboard</Link>
-          )}
-          {role === "admin" && (
-            <Link className="hidden md:block text-sm font-medium hover:text-blue-600 transition" to="/admin">Admin</Link>
-          )}
-
+        <div className="flex items-center gap-4">
           <NotificationBell />
-
+          
           {/* Profile Dropdown */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-semibold border-2 border-transparent hover:border-blue-400 transition"
+              className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold hover:ring-2 hover:ring-blue-400 transition-all overflow-hidden"
             >
-              {role.charAt(0).toUpperCase()}
+              {user?.profile_image ? (
+                <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                role.charAt(0).toUpperCase()
+              )}
             </button>
 
             {dropdownOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)}></div>
-                <div className="absolute right-0 mt-2 w-48 bg-[var(--card-light)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 py-2 slide-up">
-                  {role === "student" && (
-                    <Link to="/student/profile" className="block px-4 py-2 text-sm hover:bg-[var(--bg-light)]" onClick={() => setDropdownOpen(false)}>My Profile</Link>
-                  )}
-                  {role === "teacher" && (
-                    <Link to="/teacher/profile/edit" className="block px-4 py-2 text-sm hover:bg-[var(--bg-light)]" onClick={() => setDropdownOpen(false)}>My Profile</Link>
-                  )}
-
+                <div className="absolute right-0 mt-3 w-48 glass-card p-2 z-50 slide-up">
+                  <div className="px-3 py-2 text-xs font-semibold text-[var(--text-muted)] uppercase">Theme</div>
                   <button
                     onClick={() => { setIsDarkMode(!isDarkMode); setDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg-light)] flex justify-between items-center"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-light)] rounded-lg flex items-center justify-between"
                   >
-                    Dark Mode
-                    <span className="text-xs bg-[var(--bg-light)] px-2 py-1 rounded-md">{isDarkMode ? "ON" : "OFF"}</span>
+                    {isDarkMode ? "🌙 Dark Mode" : "☀️ Light Mode"}
                   </button>
-
-                  <div className="h-px bg-[var(--border-color)] my-1"></div>
-
+                  <div className="h-px bg-[var(--border-color)] my-2"></div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-[var(--danger)] hover:bg-red-50 dark:hover:bg-red-900/20 font-medium"
+                    className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 font-medium rounded-lg"
                   >
                     Logout
                   </button>
@@ -123,17 +96,53 @@ export default function AppShell({ title, subtitle, children }) {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 sm:px-6">
-        {title && (
-          <div className="mb-8 slide-up">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
-            {subtitle && <p className="text-sm text-[var(--text-muted)] mt-1">{subtitle}</p>}
+      <div className="flex flex-1">
+        {/* --- Drawer Sidebar --- */}
+        <aside 
+          className={`fixed md:sticky top-[var(--nav-height)] left-0 z-40 h-[calc(100vh-var(--nav-height))] w-64 glass-card rounded-none border-r border-t-0 transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        >
+          <div className="flex flex-col h-full p-4 gap-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setDrawerOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  location.pathname === link.path 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+                  : 'hover:bg-[var(--bg-light)] text-[var(--text-main)]'
+                }`}
+              >
+                <span className="text-lg">{link.icon}</span>
+                <span className="font-medium">{link.label}</span>
+              </Link>
+            ))}
+            
+            <div className="mt-auto">
+               <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium"
+                >
+                  <span className="text-lg">🚪</span>
+                  <span>Logout</span>
+                </button>
+            </div>
           </div>
+        </aside>
+
+        {/* Overlay for mobile drawer */}
+        {drawerOpen && (
+          <div 
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden"
+            onClick={() => setDrawerOpen(false)}
+          ></div>
         )}
-        <div className="app-page">
+
+        {/* --- Main Content --- */}
+        <main className="main-content fade-in">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

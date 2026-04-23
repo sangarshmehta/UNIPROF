@@ -6,8 +6,11 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import StudentDashboard from "./pages/student/StudentDashboard.jsx";
 import StudentProfilePage from "./pages/student/StudentProfilePage.jsx";
 import TeacherDetailsPage from "./pages/student/TeacherDetailsPage.jsx";
+import WishlistPage from "./pages/student/WishlistPage.jsx";
+import StudentBookingsPage from "./pages/student/StudentBookingsPage.jsx";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard.jsx";
 import EditTeacherProfilePage from "./pages/teacher/EditTeacherProfilePage.jsx";
+import TeacherSchedulePage from "./pages/teacher/TeacherSchedulePage.jsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 
 function DashboardRedirect() {
@@ -35,6 +38,7 @@ function AppRoutes() {
           }
         />
 
+        {/* --- Student Routes --- */}
         <Route
           path="/student"
           element={
@@ -52,6 +56,22 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/student/wishlist"
+          element={
+            <ProtectedRoute role="student">
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/bookings"
+          element={
+            <ProtectedRoute role="student">
+              <StudentBookingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/teachers/:id"
           element={
             <ProtectedRoute role="student">
@@ -60,11 +80,28 @@ function AppRoutes() {
           }
         />
 
+        {/* --- Teacher Routes --- */}
         <Route
           path="/teacher"
           element={
             <ProtectedRoute role="teacher">
               <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/bookings"
+          element={
+            <ProtectedRoute role="teacher">
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/schedule"
+          element={
+            <ProtectedRoute role="teacher">
+              <TeacherSchedulePage />
             </ProtectedRoute>
           }
         />
@@ -90,6 +127,7 @@ function AppRoutes() {
     </div>
   );
 }
+
 
 export default function App() {
   return (

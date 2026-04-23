@@ -12,6 +12,9 @@ const {
   getTeacherProfile,
   updateTeacherProfile,
   acceptTeacherBooking,
+  rejectTeacherBooking,
+  publishSlot,
+  deleteSlot,
 } = require("../controllers/teacherController");
 
 const router = express.Router();
@@ -25,5 +28,10 @@ router.get("/teacher/profile", requireAuth, requireTeacher, asyncHandler(getTeac
 router.put("/teacher/profile", requireAuth, requireTeacher, validate(teacherProfileSchema), asyncHandler(updateTeacherProfile));
 router.get("/teacher/bookings", requireAuth, requireTeacher, asyncHandler(teacherBookings));
 router.post("/teacher/bookings/:id/accept", requireAuth, requireTeacher, asyncHandler(acceptTeacherBooking));
+router.post("/teacher/bookings/:id/reject", requireAuth, requireTeacher, asyncHandler(rejectTeacherBooking));
+
+router.post("/teacher/slots", requireAuth, requireTeacher, asyncHandler(publishSlot));
+router.delete("/teacher/slots/:id", requireAuth, requireTeacher, asyncHandler(deleteSlot));
+
 
 module.exports = router;

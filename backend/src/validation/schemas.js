@@ -28,10 +28,13 @@ const teacherProfileSchema = z.object({
   room_number: z.string().trim().optional(),
   bio: z.string().trim().optional(),
   profile_image: z.string().trim().optional(),
+  education_level: z.string().trim().optional(),
+  specialization: z.array(z.string().trim().min(1)).optional(),
+  languages: z.array(z.string().trim().min(1)).optional(),
 });
 
 const bookingSchema = z.object({
-  student_name: z.string().trim().min(1),
+  student_name: z.string().trim().min(1).optional(),
   teacher_id: z.number().int().positive(),
   time_slot: z.string().trim().min(1),
 });
@@ -39,6 +42,7 @@ const bookingSchema = z.object({
 const ratingSchema = z.object({
   teacher_id: z.number().int().positive(),
   rating: z.number().int().min(1).max(5),
+  review: z.string().trim().optional(),
 });
 
 const teacherApprovalSchema = z.object({

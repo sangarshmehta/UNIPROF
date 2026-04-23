@@ -31,4 +31,49 @@ async function updateMyStudent(req, res) {
   return res.json(data);
 }
 
-module.exports = { getMyStudent, updateMyStudent };
+async function getWishlist(req, res) {
+  const studentId = Number(req.user.student_id);
+  assert(Number.isFinite(studentId), "Forbidden", 403);
+
+  const { data, error } = await supabaseAdmin
+    .from("wishlist")
+    .select("*, teacher:teachers(*)")
+    .eq("student_id", studentId);
+  if (error) throw error;
+  return res.json(data || []);
+}
+
+async function toggleWishlist(req, res) {
+  const studentId = Number(req.user.student_id);
+  const teacherId = Number(req.params.id);
+  assert(Number.isFinite(studentId), "Forbidden", 403);
+
+  const { data: existing, error: checkError } = await supabaseAdmin
+    .from("wishlist")
+    .select("*")
+    .eq("student_id", studentId)
+    .eq("teacher_id", teacherId)
+    .maybeSingle();
+  
+  if (checkError) throw checkError;
+
+  if (existing) {
+    const { error: delError } = await supabaseAdmin
+      .from("wishlist")
+      .delete()
+      .eq("id", existing.id);
+    if (delError) throw delError;
+    return res.json({ removed: true });
+  } else {
+    const { data, error: insError } = await supabaseAdmin
+      .from("wishlist")
+      .insert({ student_id: studentId, teacher_id: teacherId })
+      .select("*")
+      .single();
+    if (insError) throw insError;
+    return res.json(data);
+  }
+}
+
+module.exports = { getMyStudent, updateMyStudent, getWishlist, toggleWishlist };
+

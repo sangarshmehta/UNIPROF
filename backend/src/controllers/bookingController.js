@@ -58,11 +58,39 @@ async function bookSlot(req, res) {
   return res.status(201).json(data);
 }
 
+async function getMyBookings(req, res) {
+  const studentId = Number(req.user.student_id);
+  assert(Number.isFinite(studentId), "Forbidden", 403);
+
+  const { data, error } = await supabaseAdmin
+    .from("bookings")
+    .select("*, teacher:teachers(*)")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return res.json(data || []);
+}
+
 async function rateTeacher(req, res) {
   const teacherId = Number(req.body?.teacher_id);
   const rating = Number(req.body?.rating);
+  const review = String(req.body?.review || "").trim();
+  const studentId = Number(req.user.student_id);
+
   assert(Number.isFinite(teacherId), "Invalid teacher id");
   assert(Number.isInteger(rating) && rating >= 1 && rating <= 5, "rating must be 1-5");
+
+  // CRITICAL: Check if a completed booking exists
+  const { data: booking, error: bookingError } = await supabaseAdmin
+    .from("bookings")
+    .select("id")
+    .eq("student_id", studentId)
+    .eq("teacher_id", teacherId)
+    .eq("status", "completed")
+    .maybeSingle();
+  
+  if (bookingError) throw bookingError;
+  assert(booking, "You can only rate after completing a session", 403);
 
   const { data: teacher, error: teacherError } = await supabaseAdmin
     .from("teachers")
@@ -72,23 +100,33 @@ async function rateTeacher(req, res) {
   if (teacherError) throw teacherError;
   assert(teacher, "Teacher not found", 404);
 
+  // Atomic update of teacher rating
   const previousReviews = Number(teacher.total_reviews) || 0;
   const previousRating = Number(teacher.rating) || 0;
   const nextReviews = previousReviews + 1;
   const nextRating = Math.round((((previousRating * previousReviews + rating) / nextReviews) * 10)) / 10;
 
-  const { data: updated, error: updateError } = await supabaseAdmin
+  await supabaseAdmin
     .from("teachers")
-    .update({
-      total_reviews: nextReviews,
-      rating: nextRating,
+    .update({ total_reviews: nextReviews, rating: nextRating })
+    .eq("id", teacherId);
+
+  // Insert review into ratings table
+  const { data: reviewData, error: reviewError } = await supabaseAdmin
+    .from("ratings")
+    .insert({
+      student_id: studentId,
+      teacher_id: teacherId,
+      booking_id: booking.id,
+      rating,
+      review
     })
-    .eq("id", teacherId)
     .select("*")
     .single();
-  if (updateError) throw updateError;
+  if (reviewError) throw reviewError;
 
-  return res.json(updated);
+  return res.json(reviewData);
 }
 
-module.exports = { bookSlot, rateTeacher };
+module.exports = { bookSlot, rateTeacher, getMyBookings };
+

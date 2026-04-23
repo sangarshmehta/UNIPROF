@@ -36,3 +36,23 @@ export function acceptBooking(bookingId) {
     method: "POST",
   });
 }
+
+export function rejectBooking(bookingId) {
+  return apiRequest(`/api/teacher/bookings/${bookingId}/reject`, {
+    method: "POST",
+  });
+}
+
+export function publishSlot(payload) {
+  return apiRequest("/api/teacher/slots", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteSlot(id) {
+  return apiRequest(`/api/teacher/slots/${id}`, {
+    method: "DELETE",
+  });
+}
+

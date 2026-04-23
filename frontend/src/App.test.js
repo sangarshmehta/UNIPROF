@@ -1,13 +1,13 @@
 /**
- * LoginPage.test.jsx
- * ------------------
- * Smoke tests for the LoginPage component.
+ * App.test.js
+ * -----------
+ * Smoke tests for the LoginPage component (entry point).
  * Verifies it renders the key UI elements correctly and that
  * form validation blocks submission when fields are empty.
  *
  * AuthContext is mocked so the test doesn't need real credentials.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -40,15 +40,15 @@ function renderLoginPage() {
 }
 
 describe("LoginPage – rendering", () => {
-  it("displays the UNIPROF heading", () => {
+  it("displays the UniProf heading", () => {
     renderLoginPage();
-    expect(screen.getByText("UNIPROF")).toBeInTheDocument();
+    expect(screen.getByText("UniProf")).toBeInTheDocument();
   });
 
-  it("renders email and password inputs", () => {
+  it("renders email and password inputs by ID", () => {
     renderLoginPage();
-    expect(screen.getByPlaceholderText(/enter your email/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter your password/i)).toBeInTheDocument();
+    expect(document.getElementById("login-email")).toBeInTheDocument();
+    expect(document.getElementById("login-password")).toBeInTheDocument();
   });
 
   it("renders a Sign In submit button", () => {
@@ -61,9 +61,8 @@ describe("LoginPage – validation", () => {
   it("shows an error when submitted with empty fields", async () => {
     renderLoginPage();
     const button = screen.getByRole("button", { name: /sign in/i });
-    // Click submit with empty fields
     fireEvent.click(button);
-    // The required HTML5 attribute prevents submission, OR our JS guard fires
+    // The required HTML5 attribute prevents submission, OR our JS guard fires.
     // Either way, no navigation should happen and no crash.
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });

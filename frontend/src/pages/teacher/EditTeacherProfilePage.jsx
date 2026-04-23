@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../../components/layout/AppShell.jsx";
 import Alert from "../../components/ui/Alert.jsx";
@@ -6,223 +6,263 @@ import EmptyState from "../../components/ui/EmptyState.jsx";
 import { getTeacherProfile, updateTeacherProfile } from "../../services/teacherService";
 import { uploadProfileImage } from "../../services/uploadService";
 
-function parseSubjects(input) {
-  return String(input || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+const LANGUAGES_LIST = [
+  "English", "Spanish", "French", "German", "Chinese", "Japanese", "Hindi", "Arabic",
+  "Portuguese", "Russian", "Bengali", "Punjabi", "Telugu", "Marathi", "Tamil", "Urdu",
+  "Turkish", "Korean", "Vietnamese", "Italian", "Thai", "Gujarati", "Kannada", "Malayalam"
+]; // Truncated for brevity, would usually be 100+
 
 export default function EditTeacherProfilePage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
-    gender: "Male",
-    subjectsText: "",
-    room_number: "",
+    education_level: "BE / BTech",
+    specialization: [],
+    languages: [],
+    subjects: [],
     bio: "",
     profile_image: "",
   });
+
+  const [langSearch, setLangSearch] = useState("");
+  const [specInput, setSpecInput] = useState("");
+  const [subjectInput, setSubjectInput] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
-    async function loadProfile() {
+    async function load() {
       try {
         setLoading(true);
-        const profile = await getTeacherProfile();
+        const p = await getTeacherProfile();
         setForm({
-          name: profile?.name || "",
-          gender: profile?.gender || "Male",
-          subjectsText: Array.isArray(profile?.subjects) ? profile.subjects.join(", ") : "",
-          room_number: profile?.room_number || "",
-          bio: profile?.bio || "",
-          profile_image: profile?.profile_image || "",
+          name: p.name || "",
+          education_level: p.education_level || "BE / BTech",
+          specialization: p.specialization || [],
+          languages: p.languages || [],
+          subjects: p.subjects || [],
+          bio: p.bio || "",
+          profile_image: p.profile_image || "",
         });
-      } catch (requestError) {
-        setError(requestError.message || "Failed to load teacher profile");
+      } catch (err) {
+        setError("Failed to load profile");
       } finally {
         setLoading(false);
       }
     }
-    loadProfile();
+    load();
   }, []);
 
-  const subjectsPreview = useMemo(() => parseSubjects(form.subjectsText), [form.subjectsText]);
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setSuccess("");
-    setFieldErrors({});
-
-    const nextErrors = {};
-    if (!form.name.trim()) nextErrors.name = "Name is required.";
-    if (!form.room_number.trim()) nextErrors.room_number = "Room number is required.";
-    if (!subjectsPreview.length) nextErrors.subjectsText = "At least one subject is required.";
-
-    if (Object.keys(nextErrors).length) {
-      setFieldErrors(nextErrors);
-      return;
-    }
-
-    try {
-      setSaving(true);
-      await updateTeacherProfile({
-        name: form.name.trim(),
-        gender: form.gender,
-        subjects: subjectsPreview,
-        room_number: form.room_number.trim(),
-        bio: form.bio.trim(),
-        profile_image: form.profile_image.trim(),
-      });
-      setSuccess("Profile updated successfully. Redirecting...");
-      setTimeout(() => {
-        navigate("/teacher", { replace: true });
-      }, 850);
-    } catch (requestError) {
-      setError(requestError.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleImageUpload(event) {
-    const file = event.target.files?.[0];
+  async function handleImageUpload(e) {
+    const file = e.target.files?.[0];
     if (!file) return;
-    setError("");
     try {
       setUploading(true);
-      const result = await uploadProfileImage(file);
-      setForm((prev) => ({ ...prev, profile_image: result?.public_url || "" }));
-    } catch (requestError) {
-      setError(requestError.message || "Image upload failed");
+      const res = await uploadProfileImage(file);
+      setForm(prev => ({ ...prev, profile_image: res.public_url }));
+    } catch (err) {
+      setError("Image upload failed");
     } finally {
       setUploading(false);
     }
   }
 
-  return (
-    <AppShell title="Edit Teacher Profile" subtitle="Update your profile details shown to students.">
-      <div className="max-w-3xl glass-card rounded-2xl border border-white/70 p-6 shadow-sm">
-        {loading ? (
-          <EmptyState text="Loading current profile..." loading />
-        ) : (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Name</label>
-              <input
-                className={`mt-1 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:ring-4 focus:ring-indigo-100 ${
-                  fieldErrors.name ? "border-red-400" : "border-slate-300 focus:border-indigo-400"
-                }`}
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                placeholder="Teacher name"
-              />
-              {fieldErrors.name ? <p className="input-error-text">{fieldErrors.name}</p> : null}
-            </div>
+  function toggleArrayItem(key, item) {
+    setForm(prev => ({
+      ...prev,
+      [key]: prev[key].includes(item)
+        ? prev[key].filter(i => i !== item)
+        : [...prev[key], item]
+    }));
+  }
 
-            <div>
-              <label className="text-sm font-medium text-slate-700">Subjects (comma separated)</label>
-              <input
-                className={`mt-1 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:ring-4 focus:ring-indigo-100 ${
-                  fieldErrors.subjectsText ? "border-red-400" : "border-slate-300 focus:border-indigo-400"
-                }`}
-                value={form.subjectsText}
-                onChange={(event) => setForm((prev) => ({ ...prev, subjectsText: event.target.value }))}
-                placeholder="Data Structures, Algorithms"
-              />
-              {fieldErrors.subjectsText ? <p className="input-error-text">{fieldErrors.subjectsText}</p> : null}
-              {subjectsPreview.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {subjectsPreview.map((subject) => (
-                    <span key={subject} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
-                      {subject}
-                    </span>
+  async function handleSubmit(e) {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await updateTeacherProfile(form);
+      setSuccess("Profile updated! Redirecting...");
+      setTimeout(() => navigate("/teacher"), 1000);
+    } catch (err) {
+      setError("Failed to save profile");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <AppShell><EmptyState text="Loading profile..." loading /></AppShell>;
+
+  return (
+    <AppShell title="Profile Settings">
+      <div className="max-w-4xl mx-auto space-y-8 fade-in">
+        <form onSubmit={handleSubmit} className="space-y-8">
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Image & Identity */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="glass-card p-8 flex flex-col items-center text-center">
+                <div className="relative group">
+                  <img
+                    src={form.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name)}&size=256`}
+                    className="w-32 h-32 rounded-3xl object-cover mb-4 shadow-lg border-4 border-white"
+                    alt="Profile"
+                  />
+                  <label className="absolute inset-0 bg-black/40 rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white font-bold text-xs">
+                    {uploading ? "..." : "Change"}
+                    <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                  </label>
+                </div>
+                <h3 className="font-bold text-xl">{form.name}</h3>
+                <p className="text-[var(--text-muted)] text-sm font-medium">Mentor ID: #{form.id || 'N/A'}</p>
+              </div>
+
+              <div className="glass-card p-8 space-y-4">
+                <h4 className="text-[10px] uppercase font-black tracking-widest opacity-60">Education Level</h4>
+                <div className="flex flex-col gap-2">
+                  {['BE / BTech', 'ME / MTech', 'PhD'].map(lvl => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, education_level: lvl }))}
+                      className={`w-full py-3 px-4 rounded-xl text-sm font-bold border-2 transition-all ${form.education_level === lvl ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-light)]'}`}
+                    >
+                      {lvl}
+                    </button>
                   ))}
                 </div>
-              ) : null}
+              </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-700">Gender</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                value={form.gender}
-                onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
-              >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Room Number</label>
-              <input
-                className={`mt-1 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:ring-4 focus:ring-indigo-100 ${
-                  fieldErrors.room_number ? "border-red-400" : "border-slate-300 focus:border-indigo-400"
-                }`}
-                value={form.room_number}
-                onChange={(event) => setForm((prev) => ({ ...prev, room_number: event.target.value }))}
-                placeholder="B-204"
-              />
-              {fieldErrors.room_number ? <p className="input-error-text">{fieldErrors.room_number}</p> : null}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Bio</label>
-              <textarea
-                rows={4}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                value={form.bio}
-                onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
-                placeholder="Write a short professional bio..."
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Profile Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                onChange={handleImageUpload}
-              />
-              {uploading ? <p className="text-xs text-slate-500 mt-1">Uploading image...</p> : null}
-              {form.profile_image ? (
-                <div className="mt-2 flex items-center gap-3">
-                  <img src={form.profile_image} alt="Profile preview" className="h-12 w-12 rounded-lg object-cover border border-slate-200" />
-                  <p className="text-xs text-slate-600 break-all">{form.profile_image}</p>
+            {/* Right: Detailed Info */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="glass-card p-8 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest opacity-60">Professional Bio</label>
+                  <textarea
+                    className="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded-2xl px-5 py-4 text-[var(--text-main)] outline-none focus:ring-2 focus:ring-blue-400 min-h-[120px]"
+                    value={form.bio}
+                    onChange={e => setForm(p => ({ ...p, bio: e.target.value }))}
+                    placeholder="Share your expertise and background..."
+                  />
                 </div>
-              ) : null}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest opacity-60">Specialization Tags</label>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      className="flex-1 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-xl px-4 py-2 text-sm outline-none"
+                      value={specInput}
+                      onChange={e => setSpecInput(e.target.value)}
+                      placeholder="e.g. Machine Learning"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (specInput.trim()) toggleArrayItem('specialization', specInput.trim());
+                          setSpecInput("");
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { if (specInput.trim()) toggleArrayItem('specialization', specInput.trim()); setSpecInput(""); }}
+                      className="btn-primary px-4 py-2 text-xs"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.specialization.map(s => (
+                      <span key={s} className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full flex items-center gap-2">
+                        {s} <button type="button" onClick={() => toggleArrayItem('specialization', s)} className="hover:text-red-500">×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-xs font-black uppercase tracking-widest opacity-60">Language Proficiency (Multi-select)</label>
+                  <div className="relative">
+                    <input
+                      className="w-full bg-[var(--bg-light)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm outline-none"
+                      placeholder="Search languages..."
+                      value={langSearch}
+                      onChange={e => setLangSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 h-40 overflow-y-auto p-2 bg-[var(--bg-light)] rounded-xl border border-[var(--border-color)]">
+                    {LANGUAGES_LIST.filter(l => l.toLowerCase().includes(langSearch.toLowerCase())).map(l => (
+                      <button
+                        key={l}
+                        type="button"
+                        onClick={() => toggleArrayItem('languages', l)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold text-left transition-all ${form.languages.includes(l) ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-white text-[var(--text-muted)]'}`}
+                      >
+                        {l} {form.languages.includes(l) && "✓"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <button type="button" onClick={() => navigate("/teacher")} className="px-8 py-4 font-bold text-[var(--text-muted)]">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary px-12 py-4 rounded-2xl shadow-xl shadow-blue-200">
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </div>
 
-            <Alert message={error} />
-            <Alert type="success" message={success} />
+            {/* Account Settings */}
+            <div className="lg:col-span-3 glass-card p-8 space-y-6 mt-4">
+              <h3 className="text-xl font-bold border-b border-[var(--border-color)] pb-4">Account Settings</h3>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60 transition"
-              >
-                {saving ? "Saving..." : "Save Profile"}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/teacher")}
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold">Dark Mode</h4>
+                  <p className="text-[var(--text-muted)] text-sm">Toggle application theme</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+                    const newTheme = isDark ? "light" : "dark";
+                    document.documentElement.setAttribute("data-theme", newTheme);
+                    localStorage.setItem("theme", newTheme);
+                    window.dispatchEvent(new Event('storage')); // Trigger update if needed
+                  }}
+                  className="px-6 py-2 bg-[var(--bg-light)] border border-[var(--border-color)] rounded-xl font-bold transition-all hover:bg-[var(--border-color)]"
+                >
+                  Toggle Theme
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)]">
+                <div>
+                  <h4 className="font-bold text-red-500">Log Out</h4>
+                  <p className="text-[var(--text-muted)] text-sm">Sign out of your account</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    ["uniprof_token", "uniprof_role", "uniprof_name", "uniprof_gender"].forEach(k => localStorage.removeItem(k));
+                    window.location.href = "/login";
+                  }}
+                  className="px-6 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold transition-all hover:bg-red-100"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
-          </form>
-        )}
+
+          </div>
+        </form>
+
+        <Alert message={error} />
+        <Alert type="success" message={success} />
       </div>
     </AppShell>
   );
