@@ -8,14 +8,13 @@
     --primary-hover: #1d4ed8;
     --bg-light: #f8fafc;
     --card-light: #ffffff;
+    --card-dark: rgba(15, 23, 42, 0.7);
     --text-main: #0f172a;
     --text-muted: #64748b;
     --success: #22c55e;
     --danger: #ef4444;
-    --border-color: #e2e8f0;
-    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
     --border-color: rgba(226, 232, 240, 0.8);
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
     --transition-speed: 0.3s;
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
     --nav-height: 72px;
@@ -83,14 +82,14 @@
   top: 0;
   z-index: 50;
   height: var(--nav-height);
-  background: rgba(var(--bg-light), 0.8);
+  background: var(--bg-light);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border-color);
 }
 
 /* --- Buttons --- */
 .btn-primary {
-  background-color: var(--primary-color);
+  background-color: var(--primary);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
