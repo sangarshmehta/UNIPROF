@@ -82,7 +82,7 @@ export default function TeacherDetailsPage() {
         teacher_id: teacherId,
         time_slot: slot.time_slot,
       });
-      setSuccess("Booking requested! Waiting for teacher approval.");
+      setSuccess("Slot reserved successfully. Waiting for teacher approval.");
       await loadData();
     } catch (err) {
       setError(err.message || "Booking failed");

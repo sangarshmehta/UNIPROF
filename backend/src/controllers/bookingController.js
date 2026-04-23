@@ -3,6 +3,7 @@ const { assert } = require("../utils/validators");
 const { createNotification } = require("../services/notificationService");
 
 const MAX_BOOKINGS_PER_SLOT = 10;
+const ACTIVE_BOOKING_STATUSES = ["pending", "accepted"];
 
 async function bookSlot(req, res) {
   const studentId = Number(req.user.student_id);
@@ -18,13 +19,45 @@ async function bookSlot(req, res) {
     String(req.user?.email || "").split("@")[0].trim() ||
     "Student";
 
+  const { data: teacher, error: teacherError } = await supabaseAdmin
+    .from("teachers")
+    .select("id,availability")
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (teacherError) throw teacherError;
+  assert(teacher, "Teacher not found", 404);
+
+  const { data: advancedSlots, error: advancedSlotsError } = await supabaseAdmin
+    .from("availability")
+    .select("time_slot")
+    .eq("teacher_id", teacherId);
+  if (advancedSlotsError && advancedSlotsError.code !== "42P01") throw advancedSlotsError;
+
+  const availableSlotSet = new Set([
+    ...(Array.isArray(teacher.availability) ? teacher.availability : []),
+    ...((advancedSlots || []).map((slot) => slot.time_slot).filter(Boolean)),
+  ]);
+  assert(availableSlotSet.has(timeSlot), "This slot is no longer available", 409);
+
   const { count, error: countError } = await supabaseAdmin
     .from("bookings")
     .select("id", { count: "exact", head: true })
     .eq("teacher_id", teacherId)
-    .eq("time_slot", timeSlot);
+    .eq("time_slot", timeSlot)
+    .in("status", ACTIVE_BOOKING_STATUSES);
   if (countError) throw countError;
   assert((count || 0) < MAX_BOOKINGS_PER_SLOT, "This time slot is full for this teacher", 409);
+
+  const { data: duplicateReservation, error: duplicateError } = await supabaseAdmin
+    .from("bookings")
+    .select("id")
+    .eq("student_id", studentId)
+    .eq("teacher_id", teacherId)
+    .eq("time_slot", timeSlot)
+    .in("status", ACTIVE_BOOKING_STATUSES)
+    .maybeSingle();
+  if (duplicateError) throw duplicateError;
+  assert(!duplicateReservation, "You already reserved this slot", 409);
 
   const { data, error } = await supabaseAdmin
     .from("bookings")
@@ -35,6 +68,7 @@ async function bookSlot(req, res) {
       teacher_id: teacherId,
       time_slot: timeSlot,
       status: "pending",
+      reserved_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     })
     .select("*")

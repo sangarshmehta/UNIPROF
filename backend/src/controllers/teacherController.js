@@ -4,6 +4,7 @@ const { createNotification } = require("../services/notificationService");
 
 const MAX_BOOKINGS_PER_SLOT = 10;
 const LEGACY_SLOT_PREFIX = "legacy-slot:";
+const ACTIVE_BOOKING_STATUSES = ["pending", "accepted"];
 
 async function listTeachers(req, res) {
   const { data, error } = await supabaseAdmin.from("teachers").select("*").eq("is_approved", true).order("id", { ascending: true });
@@ -34,8 +35,9 @@ async function getSlots(req, res) {
 
   const { data: bookings, error: bookingsError } = await supabaseAdmin
     .from("bookings")
-    .select("time_slot")
-    .eq("teacher_id", teacherId);
+    .select("time_slot,status")
+    .eq("teacher_id", teacherId)
+    .in("status", ACTIVE_BOOKING_STATUSES);
   if (bookingsError) throw bookingsError;
 
   // Extend to include new availability table (Advanced Scheduling)
