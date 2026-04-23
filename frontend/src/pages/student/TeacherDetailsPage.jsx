@@ -37,12 +37,24 @@ export default function TeacherDetailsPage() {
     setSlots(Array.isArray(slotData) ? slotData : []);
 
     if (role === "student") {
-      const [bookings, wishlist] = await Promise.all([
+      const [bookingsResult, wishlistResult] = await Promise.allSettled([
         getMyBookings(),
         getWishlist()
       ]);
-      setMyBookings(Array.isArray(bookings) ? bookings : []);
-      setIsInWishlist(wishlist.some(item => item.teacher_id === teacherId));
+
+      if (bookingsResult.status === "fulfilled") {
+        const bookings = bookingsResult.value;
+        setMyBookings(Array.isArray(bookings) ? bookings : []);
+      } else {
+        setMyBookings([]);
+      }
+
+      if (wishlistResult.status === "fulfilled") {
+        const wishlist = Array.isArray(wishlistResult.value) ? wishlistResult.value : [];
+        setIsInWishlist(wishlist.some((item) => item.teacher_id === teacherId));
+      } else {
+        setIsInWishlist(false);
+      }
     }
   }
 

@@ -34,7 +34,6 @@ const teacherProfileSchema = z.object({
 });
 
 const bookingSchema = z.object({
-  student_name: z.string().trim().min(1).optional(),
   teacher_id: z.number().int().positive(),
   time_slot: z.string().trim().min(1),
 });

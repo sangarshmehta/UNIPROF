@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import StudentDashboard from "./pages/student/StudentDashboard.jsx";
 import StudentProfilePage from "./pages/student/StudentProfilePage.jsx";
@@ -27,7 +28,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth" element={<Navigate to="/login" replace />} />
-        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         <Route
           path="/dashboard"

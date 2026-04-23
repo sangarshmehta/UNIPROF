@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppShell from "../../components/layout/AppShell.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import Alert from "../../components/ui/Alert.jsx";
 import { getMyBookings } from "../../services/bookingService";
 
 export default function StudentBookingsPage() {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,10 +15,11 @@ export default function StudentBookingsPage() {
     async function load() {
       try {
         setLoading(true);
+        setError("");
         const data = await getMyBookings();
         setBookings(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError("Failed to load bookings");
+        setError(err.message || "Failed to load bookings");
       } finally {
         setLoading(false);
       }
@@ -35,7 +38,7 @@ export default function StudentBookingsPage() {
           <EmptyState 
             text="You have no bookings yet." 
             actionText="Book a Session" 
-            onAction={() => window.location.href = '/student'} 
+            onAction={() => navigate("/student")} 
           />
         ) : (
           <div className="space-y-4">
@@ -62,7 +65,7 @@ export default function StudentBookingsPage() {
                 
                 {booking.status === 'completed' && (
                    <button 
-                    onClick={() => window.location.href = `/teachers/${booking.teacher_id}`}
+                    onClick={() => navigate(`/teachers/${booking.teacher_id}`)}
                     className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all"
                    >
                      Rate Session

@@ -20,24 +20,31 @@
 const request = require("supertest");
 
 // Load env so env.js validation passes before requiring app.
-require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
+require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env"), quiet: true });
 
 const skipDb = process.env.TEST_SKIP_DB === "true";
 
 let app;
+let appLoadError = null;
 try {
   app = require("../../src/app");
 } catch (err) {
-  // If env validation throws (e.g. missing JWT_SECRET in CI), skip all tests gracefully.
+  appLoadError = err;
+}
+
+const describeWhenAppReady = app ? describe : describe.skip;
+const describeWhenDbReady = app && !skipDb ? describe : describe.skip;
+
+if (!app) {
   describe("backend – env not configured", () => {
-    it.skip("skipped – missing required env vars", () => {});
+    it("skips app-level tests when required env vars are missing", () => {
+      expect(appLoadError).toBeTruthy();
+    });
   });
-  // eslint-disable-next-line no-process-exit
-  process.exit(0);
 }
 
 // ── Root & health endpoints ───────────────────────────────────
-describe("GET /", () => {
+describeWhenAppReady("GET /", () => {
   it("returns 200 with running message", async () => {
     const res = await request(app).get("/");
     expect(res.statusCode).toBe(200);
@@ -45,7 +52,7 @@ describe("GET /", () => {
   });
 });
 
-describe("GET /health", () => {
+describeWhenAppReady("GET /health", () => {
   it("returns 200 with { status: 'ok' }", async () => {
     const res = await request(app).get("/health");
     expect(res.statusCode).toBe(200);
@@ -54,7 +61,7 @@ describe("GET /health", () => {
 });
 
 // ── Protected route guard ────────────────────────────────────
-describe("GET /api/me (protected)", () => {
+describeWhenAppReady("GET /api/me (protected)", () => {
   it("returns 401 when no Authorization header is sent", async () => {
     const res = await request(app).get("/api/me");
     expect(res.statusCode).toBe(401);
@@ -69,7 +76,7 @@ describe("GET /api/me (protected)", () => {
 });
 
 // ── 404 for unknown routes ────────────────────────────────────
-describe("Unknown route", () => {
+describeWhenAppReady("Unknown route", () => {
   it("returns 404 for an unregistered path", async () => {
     const res = await request(app).get("/api/does-not-exist");
     expect(res.statusCode).toBe(404);
@@ -77,7 +84,7 @@ describe("Unknown route", () => {
 });
 
 // ── Auth endpoint smoke tests (require DB) ────────────────────
-(skipDb ? describe.skip : describe)("POST /api/login – bad credentials (requires DB)", () => {
+describeWhenDbReady("POST /api/login – bad credentials (requires DB)", () => {
   it("returns 400 or 401 for missing fields", async () => {
     const res = await request(app)
       .post("/api/login")
@@ -96,7 +103,7 @@ describe("Unknown route", () => {
 });
 
 // ── Public teacher listing (requires DB) ─────────────────────
-(skipDb ? describe.skip : describe)("GET /api/teachers (requires DB)", () => {
+describeWhenDbReady("GET /api/teachers (requires DB)", () => {
   it("returns 200 with an array", async () => {
     const res = await request(app).get("/api/teachers");
     expect(res.statusCode).toBe(200);
@@ -108,49 +115,49 @@ describe("Unknown route", () => {
 // These verify that auth middleware blocks unauthenticated access.
 // They are fully deterministic and do NOT hit Supabase.
 
-describe("GET /api/bookings/me (protected)", () => {
+describeWhenAppReady("GET /api/bookings/me (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).get("/api/bookings/me");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("GET /api/wishlist (protected)", () => {
+describeWhenAppReady("GET /api/wishlist (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).get("/api/wishlist");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("POST /api/wishlist/:id (protected)", () => {
+describeWhenAppReady("POST /api/wishlist/:id (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).post("/api/wishlist/1");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("GET /api/teacher/bookings (protected)", () => {
+describeWhenAppReady("GET /api/teacher/bookings (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).get("/api/teacher/bookings");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("POST /api/teacher/bookings/:id/reject (protected)", () => {
+describeWhenAppReady("POST /api/teacher/bookings/:id/reject (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).post("/api/teacher/bookings/1/reject");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("POST /api/teacher/slots (protected)", () => {
+describeWhenAppReady("POST /api/teacher/slots (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).post("/api/teacher/slots");
     expect(res.statusCode).toBe(401);
   });
 });
 
-describe("DELETE /api/teacher/slots/:id (protected)", () => {
+describeWhenAppReady("DELETE /api/teacher/slots/:id (protected)", () => {
   it("returns 401 when no token sent", async () => {
     const res = await request(app).delete("/api/teacher/slots/1");
     expect(res.statusCode).toBe(401);

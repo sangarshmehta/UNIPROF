@@ -46,7 +46,7 @@
 .animated-bg {
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
+  animation: gradient 20s ease infinite;
 }
 
 @keyframes gradient {
@@ -114,7 +114,7 @@
 
 /* --- Animations --- */
 .slide-up {
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideUp {
@@ -123,7 +123,7 @@
 }
 
 .fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.25s ease-out forwards;
 }
 
 @keyframes fadeIn {
@@ -156,4 +156,20 @@
   margin-top: 0.25rem;
   font-size: 0.75rem;
   color: var(--danger, #ef4444);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg,
+  .slide-up,
+  .fade-in {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .glass-card:hover,
+  .btn-primary:hover,
+  .btn-primary:active {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }

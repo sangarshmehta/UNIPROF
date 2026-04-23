@@ -7,13 +7,16 @@ const MAX_BOOKINGS_PER_SLOT = 10;
 async function bookSlot(req, res) {
   const studentId = Number(req.user.student_id);
   const teacherId = Number(req.body?.teacher_id);
-  const studentName = String(req.body?.student_name || "").trim();
   const timeSlot = String(req.body?.time_slot || "").trim();
 
   assert(Number.isFinite(studentId), "Forbidden", 403);
   assert(Number.isFinite(teacherId), "Invalid teacher id");
-  assert(studentName, "student_name is required");
   assert(timeSlot, "time_slot is required");
+
+  const studentName =
+    String(req.user?.name || "").trim() ||
+    String(req.user?.email || "").split("@")[0].trim() ||
+    "Student";
 
   const { count, error: countError } = await supabaseAdmin
     .from("bookings")
@@ -64,11 +67,40 @@ async function getMyBookings(req, res) {
 
   const { data, error } = await supabaseAdmin
     .from("bookings")
-    .select("*, teacher:teachers(*)")
+    .select(`
+      *,
+      teacher:teachers(*)
+    `)
     .eq("student_id", studentId)
     .order("created_at", { ascending: false });
-  if (error) throw error;
-  return res.json(data || []);
+  if (!error) return res.json(data || []);
+
+  // Fallback for environments where PostgREST relationship metadata is stale or unavailable.
+  const { data: bookings, error: bookingsError } = await supabaseAdmin
+    .from("bookings")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (bookingsError) throw bookingsError;
+
+  const teacherIds = Array.from(new Set((bookings || []).map((booking) => Number(booking.teacher_id)).filter(Number.isFinite)));
+  let teacherMap = new Map();
+
+  if (teacherIds.length) {
+    const { data: teachers, error: teachersError } = await supabaseAdmin
+      .from("teachers")
+      .select("*")
+      .in("id", teacherIds);
+    if (teachersError) throw teachersError;
+    teacherMap = new Map((teachers || []).map((teacher) => [Number(teacher.id), teacher]));
+  }
+
+  const hydrated = (bookings || []).map((booking) => ({
+    ...booking,
+    teacher: teacherMap.get(Number(booking.teacher_id)) || null,
+  }));
+
+  return res.json(hydrated);
 }
 
 async function rateTeacher(req, res) {

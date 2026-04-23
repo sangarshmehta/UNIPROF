@@ -109,8 +109,8 @@ export default function AppShell({ title, children }) {
                 onClick={() => setDrawerOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   location.pathname === link.path 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                  : 'hover:bg-[var(--bg-light)] text-[var(--text-main)]'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:bg-blue-500/20 dark:text-blue-100 dark:shadow-none' 
+                  : 'hover:bg-[var(--bg-light)] text-[var(--text-main)] dark:hover:bg-slate-800/60'
                 }`}
               >
                 <span className="text-lg">{link.icon}</span>
