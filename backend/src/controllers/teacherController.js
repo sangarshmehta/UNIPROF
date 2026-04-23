@@ -222,8 +222,14 @@ async function rejectTeacherBooking(req, res) {
 
 async function publishSlot(req, res) {
   const teacherId = Number(req.user.teacher_id);
+  // #region agent log
+  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H1_H2',location:'backend/src/controllers/teacherController.js:225',message:'publishSlot entry',data:{hasUser:Boolean(req.user),teacherId,isTeacherIdFinite:Number.isFinite(teacherId),bodyKeys:Object.keys(req.body||{})},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   assert(Number.isFinite(teacherId), "Forbidden", 403);
   const { time_slot } = req.body;
+  // #region agent log
+  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H3',location:'backend/src/controllers/teacherController.js:229',message:'publishSlot payload validation checkpoint',data:{hasTimeSlot:Boolean(time_slot),timeSlotLength:String(time_slot||'').length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   assert(time_slot, "time_slot is required");
 
   const { data, error } = await supabaseAdmin
@@ -231,6 +237,9 @@ async function publishSlot(req, res) {
     .insert({ teacher_id: teacherId, time_slot })
     .select("*")
     .single();
+  // #region agent log
+  fetch('http://127.0.0.1:7584/ingest/5045955f-c250-425b-86f0-a7ee0a45002a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cfa3fe'},body:JSON.stringify({sessionId:'cfa3fe',runId:'initial',hypothesisId:'H4_H5',location:'backend/src/controllers/teacherController.js:237',message:'publishSlot insert result',data:{hasData:Boolean(data),errorCode:error?.code||null,errorMessage:error?.message||null,errorHint:error?.hint||null},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   if (error) throw error;
   return res.status(201).json(data);
 }
