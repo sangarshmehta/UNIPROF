@@ -4,6 +4,25 @@ const { createNotification } = require("../services/notificationService");
 
 const MAX_BOOKINGS_PER_SLOT = 10;
 const ACTIVE_BOOKING_STATUSES = ["pending", "accepted"];
+const RESERVATION_ID_PREFIX = "reservation:";
+
+async function getReservationRowsForTeacherAndSlot(teacherId, timeSlot, studentId = null) {
+  let query = supabaseAdmin
+    .from("student_reservations")
+    .select("id,status")
+    .eq("teacher_id", teacherId)
+    .eq("time_slot", timeSlot)
+    .in("status", ACTIVE_BOOKING_STATUSES);
+
+  if (Number.isFinite(studentId)) {
+    query = query.eq("student_id", studentId);
+  }
+
+  const { data, error } = await query;
+  if (error && error.code === "42P01") return [];
+  if (error) throw error;
+  return data || [];
+}
 
 async function bookSlot(req, res) {
   const studentId = Number(req.user.student_id);
@@ -39,14 +58,16 @@ async function bookSlot(req, res) {
   ]);
   assert(availableSlotSet.has(timeSlot), "This slot is no longer available", 409);
 
-  const { count, error: countError } = await supabaseAdmin
+  const { data: activeSlotBookings, error: countError } = await supabaseAdmin
     .from("bookings")
-    .select("id", { count: "exact", head: true })
+    .select("id")
     .eq("teacher_id", teacherId)
     .eq("time_slot", timeSlot)
     .in("status", ACTIVE_BOOKING_STATUSES);
   if (countError) throw countError;
-  assert((count || 0) < MAX_BOOKINGS_PER_SLOT, "This time slot is full for this teacher", 409);
+  const reservationRowsForSlot = await getReservationRowsForTeacherAndSlot(teacherId, timeSlot);
+  const activeCount = (Array.isArray(activeSlotBookings) ? activeSlotBookings.length : 0) + reservationRowsForSlot.length;
+  assert(activeCount < MAX_BOOKINGS_PER_SLOT, "This time slot is full for this teacher", 409);
 
   const { data: duplicateReservations, error: duplicateError } = await supabaseAdmin
     .from("bookings")
@@ -57,7 +78,8 @@ async function bookSlot(req, res) {
     .in("status", ACTIVE_BOOKING_STATUSES)
     .limit(1);
   if (duplicateError) throw duplicateError;
-  assert(!(duplicateReservations || []).length, "You already reserved this slot", 409);
+  const reservationDuplicates = await getReservationRowsForTeacherAndSlot(teacherId, timeSlot, studentId);
+  assert(!(duplicateReservations || []).length && !reservationDuplicates.length, "You already reserved this slot", 409);
 
   let { data, error } = await supabaseAdmin
     .from("bookings")
@@ -89,6 +111,47 @@ async function bookSlot(req, res) {
       })
       .select("*")
       .single());
+  }
+
+  // Final fallback for environments where bookings writes are broken:
+  // reserve in dedicated student_reservations table.
+  if (error) {
+    let reservationInsert = await supabaseAdmin
+      .from("student_reservations")
+      .insert({
+        student_name: studentName,
+        student_id: studentId,
+        student_email: req.user.email,
+        teacher_id: teacherId,
+        time_slot: timeSlot,
+        status: "pending",
+        reserved_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      })
+      .select("*")
+      .single();
+
+    if (reservationInsert.error && reservationInsert.error.code === "42P01") {
+      reservationInsert = await supabaseAdmin
+        .from("student_reservations")
+        .insert({
+          student_name: studentName,
+          student_id: studentId,
+          student_email: req.user.email,
+          teacher_id: teacherId,
+          time_slot: timeSlot,
+          status: "pending",
+          created_at: new Date().toISOString(),
+        })
+        .select("*")
+        .single();
+    }
+
+    if (reservationInsert.error) throw error;
+    data = {
+      ...reservationInsert.data,
+      id: `${RESERVATION_ID_PREFIX}${reservationInsert.data.id}`,
+    };
   }
 
   if (error) throw error;
@@ -124,7 +187,10 @@ async function getMyBookings(req, res) {
     `)
     .eq("student_id", studentId)
     .order("created_at", { ascending: false });
-  if (!error) return res.json(data || []);
+  let primaryRows = [];
+  if (!error) {
+    primaryRows = data || [];
+  }
 
   // Fallback for environments where PostgREST relationship metadata is stale or unavailable.
   const { data: bookings, error: bookingsError } = await supabaseAdmin
@@ -132,9 +198,22 @@ async function getMyBookings(req, res) {
     .select("*")
     .eq("student_id", studentId)
     .order("created_at", { ascending: false });
-  if (bookingsError) throw bookingsError;
+  if (bookingsError && !primaryRows.length) throw bookingsError;
+  const fallbackBookings = bookings || [];
 
-  const teacherIds = Array.from(new Set((bookings || []).map((booking) => Number(booking.teacher_id)).filter(Number.isFinite)));
+  const { data: reservations, error: reservationsError } = await supabaseAdmin
+    .from("student_reservations")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (reservationsError && reservationsError.code !== "42P01") throw reservationsError;
+  const reservationRows = (reservations || []).map((row) => ({
+    ...row,
+    id: `${RESERVATION_ID_PREFIX}${row.id}`,
+  }));
+
+  const combinedRows = primaryRows.length ? [...primaryRows, ...reservationRows] : [...fallbackBookings, ...reservationRows];
+  const teacherIds = Array.from(new Set(combinedRows.map((booking) => Number(booking.teacher_id)).filter(Number.isFinite)));
   let teacherMap = new Map();
 
   if (teacherIds.length) {
@@ -146,9 +225,9 @@ async function getMyBookings(req, res) {
     teacherMap = new Map((teachers || []).map((teacher) => [Number(teacher.id), teacher]));
   }
 
-  const hydrated = (bookings || []).map((booking) => ({
+  const hydrated = combinedRows.map((booking) => ({
     ...booking,
-    teacher: teacherMap.get(Number(booking.teacher_id)) || null,
+    teacher: booking.teacher || teacherMap.get(Number(booking.teacher_id)) || null,
   }));
 
   return res.json(hydrated);

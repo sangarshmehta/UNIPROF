@@ -5,6 +5,18 @@ const { createNotification } = require("../services/notificationService");
 const MAX_BOOKINGS_PER_SLOT = 10;
 const LEGACY_SLOT_PREFIX = "legacy-slot:";
 const ACTIVE_BOOKING_STATUSES = ["pending", "accepted"];
+const RESERVATION_ID_PREFIX = "reservation:";
+
+async function getTeacherReservations(teacherId) {
+  const { data, error } = await supabaseAdmin
+    .from("student_reservations")
+    .select("*")
+    .eq("teacher_id", teacherId)
+    .order("created_at", { ascending: false });
+  if (error && error.code === "42P01") return [];
+  if (error) throw error;
+  return data || [];
+}
 
 async function listTeachers(req, res) {
   const { data, error } = await supabaseAdmin.from("teachers").select("*").eq("is_approved", true).order("id", { ascending: true });
@@ -39,6 +51,7 @@ async function getSlots(req, res) {
     .eq("teacher_id", teacherId)
     .in("status", ACTIVE_BOOKING_STATUSES);
   if (bookingsError) throw bookingsError;
+  const reservations = await getTeacherReservations(teacherId);
 
   // Extend to include new availability table (Advanced Scheduling)
   const { data: advancedSlots, error: advancedSlotsError } = await supabaseAdmin
@@ -53,11 +66,14 @@ async function getSlots(req, res) {
     ...(Array.isArray(teacher.availability) ? teacher.availability : []),
     ...(advancedSlots || []).map((s) => s.time_slot),
     ...(bookings || []).map((b) => b.time_slot),
+    ...reservations.map((r) => r.time_slot),
   ];
   const slotSet = new Set(allSlots.filter(Boolean));
 
   const slots = Array.from(slotSet).map((slot) => {
-    const bookedCount = (bookings || []).filter((b) => b.time_slot === slot).length;
+    const bookedCount =
+      (bookings || []).filter((b) => b.time_slot === slot).length +
+      reservations.filter((r) => r.time_slot === slot && ACTIVE_BOOKING_STATUSES.includes(r.status)).length;
     const remainingSlots = Math.max(0, MAX_BOOKINGS_PER_SLOT - bookedCount);
     let status = "Available";
     if (remainingSlots <= 0) status = "Full";
@@ -123,7 +139,8 @@ async function teacherDashboard(req, res) {
 
   const { data, error } = await supabaseAdmin.from("bookings").select("status").eq("teacher_id", teacherId);
   if (error) throw error;
-  const rows = data || [];
+  const reservationRows = await getTeacherReservations(teacherId);
+  const rows = [...(data || []), ...reservationRows];
   const accepted = rows.filter((b) => b.status === "accepted").length;
   const total = rows.length;
 
@@ -144,7 +161,12 @@ async function teacherBookings(req, res) {
     .eq("teacher_id", teacherId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return res.json(data || []);
+  const reservations = await getTeacherReservations(teacherId);
+  const normalizedReservations = reservations.map((row) => ({
+    ...row,
+    id: `${RESERVATION_ID_PREFIX}${row.id}`,
+  }));
+  return res.json([...(data || []), ...normalizedReservations]);
 }
 
 async function getTeacherProfile(req, res) {
@@ -197,8 +219,49 @@ async function updateTeacherProfile(req, res) {
 
 async function acceptTeacherBooking(req, res) {
   const teacherId = Number(req.user.teacher_id);
-  const bookingId = Number(req.params.id);
+  const bookingIdRaw = String(req.params.id || "");
   assert(Number.isFinite(teacherId), "Forbidden", 403);
+
+  if (bookingIdRaw.startsWith(RESERVATION_ID_PREFIX)) {
+    const reservationId = Number(bookingIdRaw.slice(RESERVATION_ID_PREFIX.length));
+    assert(Number.isFinite(reservationId), "Invalid booking id");
+    const { data: reservation, error: reservationError } = await supabaseAdmin
+      .from("student_reservations")
+      .select("*")
+      .eq("id", reservationId)
+      .maybeSingle();
+    if (reservationError) throw reservationError;
+    assert(reservation, "Booking not found", 404);
+    assert(Number(reservation.teacher_id) === teacherId, "Forbidden", 403);
+
+    const { data: updatedReservation, error: updateReservationError } = await supabaseAdmin
+      .from("student_reservations")
+      .update({ status: "accepted", accepted_at: new Date().toISOString() })
+      .eq("id", reservationId)
+      .select("*")
+      .single();
+    if (updateReservationError) throw updateReservationError;
+
+    const { data: studentOwner, error: studentOwnerError } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("student_id", reservation.student_id)
+      .maybeSingle();
+    if (studentOwnerError) throw studentOwnerError;
+
+    await createNotification({
+      userId: studentOwner?.id,
+      type: "booking_accepted",
+      title: "Booking accepted",
+      message: `Your booking for ${reservation.time_slot} was accepted.`,
+      entityType: "booking",
+      entityId: updatedReservation.id,
+    });
+
+    return res.json({ ...updatedReservation, id: `${RESERVATION_ID_PREFIX}${updatedReservation.id}` });
+  }
+
+  const bookingId = Number(bookingIdRaw);
   assert(Number.isFinite(bookingId), "Invalid booking id");
 
   const { data: booking, error: bookingError } = await supabaseAdmin
@@ -239,8 +302,25 @@ async function acceptTeacherBooking(req, res) {
 
 async function rejectTeacherBooking(req, res) {
   const teacherId = Number(req.user.teacher_id);
-  const bookingId = Number(req.params.id);
+  const bookingIdRaw = String(req.params.id || "");
   assert(Number.isFinite(teacherId), "Forbidden", 403);
+
+  if (bookingIdRaw.startsWith(RESERVATION_ID_PREFIX)) {
+    const reservationId = Number(bookingIdRaw.slice(RESERVATION_ID_PREFIX.length));
+    assert(Number.isFinite(reservationId), "Invalid booking id");
+    const { data: updatedReservation, error: reservationError } = await supabaseAdmin
+      .from("student_reservations")
+      .update({ status: "rejected" })
+      .eq("id", reservationId)
+      .eq("teacher_id", teacherId)
+      .select("*")
+      .single();
+    if (reservationError) throw reservationError;
+    return res.json({ ...updatedReservation, id: `${RESERVATION_ID_PREFIX}${updatedReservation.id}` });
+  }
+
+  const bookingId = Number(bookingIdRaw);
+  assert(Number.isFinite(bookingId), "Invalid booking id");
 
   const { data: updated, error } = await supabaseAdmin
     .from("bookings")
